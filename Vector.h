@@ -46,11 +46,18 @@ namespace Vec{
 			data[2] = z;
 		}
 		vecN(float x, float y, float z, float w){
-			static_assert(N>=4, "Cannot consturct vector with 4 arguments!");
+			static_assert(N>=4, "Cannot construct vector with 4 arguments!");
 			data[0] = x;
 			data[1] = y;
 			data[2] = z;
 			data[3] = w;
+		}
+		vecN(vecN<T,2> xy, vecN<T,2> zw){
+			static_assert(N == 4, "Cannot construct a non-vec4 using two vec2s!");
+			data[0] = xy.data[0];
+			data[1] = xy.data[1];
+			data[2] = zw.data[0];
+			data[3] = zw.data[1];
 		}
 		explicit vecN(T* newData){
 			for (unsigned int i = 0; i < N; ++i) data[i] = newData[i];
@@ -234,6 +241,7 @@ namespace Vec{
 	int LuaCreateVec3(lua_State* L, float x, float y, float z);
 	int LuaLoadVec3(lua_State* L);
 	
+	int LuaCreateVec4(lua_State* L, vec2 xy, vec2 zw);
 	int LuaCreateVec4(lua_State* L, vec4 vec);
 	int LuaCreateVec4(lua_State* L, float x, float y, float z, float w);
 	int LuaLoadVec4(lua_State* L);

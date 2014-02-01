@@ -20,7 +20,7 @@ namespace Vec{
 	static int Vec2Dot(lua_State* L);
 	static int Vec2_Index(lua_State* L){
 		vec2* vec = (vec2*)luaL_checkudata(L,1,"Vector2");
-		string str = luaL_checkstring(L,2);
+		string str = luaL_checkstring(L,2); //TODO lua_option
 		if (str == "x") lua_pushnumber(L,vec->x);
 		else if (str == "y") lua_pushnumber(L,vec->y);
 		else if (str == "unit") LuaCreateVec2(L,vec->unit());
@@ -30,7 +30,7 @@ namespace Vec{
 		else return luaL_error(L, "%s is not a valid member of vec2",str);
 		return 1;
 	}
-	static int Vec2_NewIndex(lua_State* L){
+	static int Vec2_NewIndex(lua_State* L){ //TODO: lua_option
 		vec2* vec = (vec2*)luaL_checkudata(L,1,"Vector2");
 		string str = luaL_checkstring(L,2);
 		if (str == "x") vec->x = (float)luaL_checknumber(L,3);
@@ -136,7 +136,7 @@ namespace Vec{
 	}
 	static int Vec3Dot(lua_State* L);
 	static int Vec3Cross(lua_State* L);
-	static int Vec3_Index(lua_State* L){
+	static int Vec3_Index(lua_State* L){ //TODO: lua_option
 		vec3* vec = (vec3*)luaL_checkudata(L,1,"Vector3");
 		string str = luaL_checkstring(L,2);
 		if (str == "x") lua_pushnumber(L,vec->x);
@@ -150,7 +150,7 @@ namespace Vec{
 		else return luaL_error(L, "%s is not a valid member of vec3",str);
 		return 1;
 	}
-	static int Vec3_NewIndex(lua_State* L){
+	static int Vec3_NewIndex(lua_State* L){ //TODO: lua_option
 		vec3* vec = (vec3*)luaL_checkudata(L,1,"Vector3");
 		string str = luaL_checkstring(L,2);
 		if (str == "x") vec->x = (float)luaL_checknumber(L,3);
@@ -248,7 +248,11 @@ namespace Vec{
 
 
 
-	
+	int LuaCreateVec4(lua_State* L, vec2 xy, vec2 zw){
+		new(lua_newuserdata(L,sizeof(vec4)))(vec4)(xy,zw);
+		luaL_setmetatable(L,"Vector4");
+		return 1;
+	}
 	int LuaCreateVec4(lua_State* L, float x, float y, float z, float w){
 		new(lua_newuserdata(L,sizeof(vec4)))(vec4)(x,y,z,w);
 		luaL_setmetatable(L,"Vector4");
@@ -260,13 +264,16 @@ namespace Vec{
 		return 1;
 	}
 	static int CreateVec4(lua_State* L){
+		if (lua_isuserdata(L,1) && lua_isuserdata(L,2)){
+			return LuaCreateVec4(L,*(vec2*)luaL_checkudata(L,1,"Vector2"),*(vec2*)luaL_checkudata(L,2,"Vector2"));
+		}
 		return LuaCreateVec4(L,
-			luaL_checknumber(L,1),
-			luaL_checknumber(L,2),
-			luaL_checknumber(L,3),
-			luaL_checknumber(L,4));
+			(float)luaL_checknumber(L,1),
+			(float)luaL_checknumber(L,2),
+			(float)luaL_checknumber(L,3),
+			(float)luaL_checknumber(L,4));
 	}
-	static int Vec4_Index(lua_State* L){
+	static int Vec4_Index(lua_State* L){ //TODO: lua_option
 		vec4* vec = (vec4*)luaL_checkudata(L,1,"Vector4");
 		string str = luaL_checkstring(L,2);
 		if (str == "x" || str == "r") lua_pushnumber(L,vec->x);
@@ -276,7 +283,7 @@ namespace Vec{
 		else return luaL_error(L, "%s is not a valid member of vec4",str);
 		return 1;
 	}
-	static int Vec4_NewIndex(lua_State* L){
+	static int Vec4_NewIndex(lua_State* L){ //TODO: lua_option
 		vec4* vec = (vec4*)luaL_checkudata(L,1,"Vector4");
 		string str = luaL_checkstring(L,2);
 		if (str == "x" || str == "r") vec->x = (float)luaL_checknumber(L,3);

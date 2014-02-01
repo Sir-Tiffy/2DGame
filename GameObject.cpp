@@ -8,10 +8,11 @@ using namespace Vec;
 namespace GameObject{
 
 	Sprite::Sprite()
-		:UV(0,0,0,0),
+		:UV(0,0,1,1),
 		colour(1,1,1),
 		position(0,0),
-		size(.5f,.5f),
+		size(1,1),
+		layer(0),
 		visible(true),
 		texture(nullptr),
 		textureHandle(LUA_NOREF),
@@ -20,7 +21,7 @@ namespace GameObject{
 
 	unsigned int Sprite::GetSortKey(){
 		if (modified){
-			sortKey = (texture->id<<8)|layer;
+			sortKey = (((texture!=nullptr)?(texture->textureID<<8):0))|layer;
 			modified = false;
 		}
 		return sortKey;
@@ -65,14 +66,26 @@ namespace GameObject{
 		return 0;
 	}
 	
-	const static char* const SPRITEVARS[] = {
+	const static char* const SPRITEINDEX[] = {
 		"Position",
 		"Size",
 		"Visible",
 		"Colour",
+		"Layer",
 		"UV",
 		"Texture",
 		"Destroy",
+		nullptr
+	};	
+	const static char* const SPRITENEWINDEX[] = {
+		"Position",
+		"Size",
+		"Visible",
+		"Colour",
+		"Layer",
+		"UV",
+		"Texture",
+		//"Destroy",
 		nullptr
 	};
 	enum {
@@ -80,6 +93,7 @@ namespace GameObject{
 		SPRITE_SIZE,
 		SPRITE_VISIBLE,
 		SPRITE_COLOUR,
+		SPRITE_LAYER,
 		SPRITE_UV,
 		SPRITE_TEXTURE,
 		SPRITE_DESTROY
@@ -87,11 +101,12 @@ namespace GameObject{
 
 	static int Sprite_Index(lua_State* L){
 		Sprite* sprite = (Sprite*)luaL_checkudata(L,1,"Sprite");
-		switch(luaL_checkoption(L,2,nullptr,SPRITEVARS)){
+		switch(luaL_checkoption(L,2,nullptr,SPRITEINDEX)){
 			case SPRITE_POSITION: return LuaCreateVec2(L,sprite->position);
 			case SPRITE_SIZE: return LuaCreateVec2(L,sprite->size);
 			case SPRITE_VISIBLE: lua_pushboolean(L,sprite->visible); return 1;
 			case SPRITE_COLOUR: return LuaCreateVec3(L, sprite->colour);
+			case SPRITE_LAYER: lua_pushnumber(L,sprite->GetLayer()); return 1;
 			case SPRITE_UV: return LuaCreateVec4(L, sprite->UV);
 			case SPRITE_TEXTURE:
 				if (sprite->GetTexture() == nullptr) lua_pushnil(L);
@@ -100,31 +115,20 @@ namespace GameObject{
 			case SPRITE_DESTROY: lua_pushcfunction(L,DestroySprite); return 1;
 		}
 		return luaL_error(L,"Failed to handle member '%s' of Sprite!",lua_tostring(L,2));
-
-		/*string index = luaL_checkstring(L,2);
-		if (index == "Position"){
-			return LuaCreateVec2(L,sprite->position);
-		} else if (index == "Size"){
-			return LuaCreateVec2(L,sprite->size);
-		} else if (index == "Visible"){
-			lua_pushboolean(L,sprite->visible);
-		} else if (index == "Colour"){
-			return LuaCreateVec3(L,sprite->colour);
-		} else if (index == "UV"){
-			return LuaCreateVec4(L,sprite->UV);
-		} else if (index == "Destroy"){
-			lua_pushcfunction(L,DestroySprite);
-		} else return luaL_error(L, "%s is not a valid member of Sprite",index.c_str());*/
-		//return 1;
 	}
 	static int Sprite_NewIndex(lua_State* L){
 		Sprite* sprite = (Sprite*)luaL_checkudata(L,1,"Sprite");
-		switch(luaL_checkoption(L,2,nullptr,SPRITEVARS)){
+		switch(luaL_checkoption(L,2,nullptr,SPRITENEWINDEX)){
 			case SPRITE_POSITION: sprite->position = *(vec2*)luaL_checkudata(L,3,"Vector2"); return 0;
 			case SPRITE_SIZE: sprite->size = *(vec2*)luaL_checkudata(L,3,"Vector2"); return 0;
 			case SPRITE_VISIBLE: sprite->visible = lua_toboolean(L,3)!=0; return 0;
 			case SPRITE_COLOUR: sprite->colour = *(vec3*)luaL_checkudata(L,3,"Vector3"); return 0;
-			case SPRITE_UV: sprite->UV = *(vec4*)luaL_checkudata(L,3,"Vector4"); return 0;
+			case SPRITE_LAYER: {
+				const double newLayer = luaL_checknumber(L,3);
+				if ((unsigned char)newLayer != newLayer) return luaL_argerror(L,3,"Sprite layer must be an integer from 0-255");
+				sprite->SetLayer((unsigned char)newLayer);
+				return 0;
+			} case SPRITE_UV: sprite->UV = *(vec4*)luaL_checkudata(L,3,"Vector4"); return 0;
 			case SPRITE_TEXTURE:
 				if (lua_isnoneornil(L,3)){
 					luaL_unref(L,LUA_REGISTRYINDEX, sprite->GetTextureHandle());
@@ -135,17 +139,9 @@ namespace GameObject{
 					sprite->SetTexture(tex, luaL_ref(L,LUA_REGISTRYINDEX));
 				}
 				return 0;
-			case SPRITE_DESTROY: return luaL_error(L,"Destroy is not a valid member of Sprite");
+			default: return luaL_error(L,"Failed to handle member '%s' of Sprite!",lua_tostring(L,2));
 		}
-		return luaL_error(L,"Failed to handle member '%s' of Sprite!",lua_tostring(L,2));
-		/*string index = luaL_checkstring(L,2);
-		if (index == "Position") sprite->position = *(vec2*)luaL_checkudata(L,3,"Vector2");
-		else if (index == "Size") sprite->size = *(vec2*)luaL_checkudata(L,3,"Vector2");
-		else if (index == "Colour") sprite->colour = *(vec3*)luaL_checkudata(L,3,"Vector3");
-		else if (index == "UV") sprite->UV = *(vec4*)luaL_checkudata(L,3,"Vector4");
-		else if (index == "Visible") sprite->visible = lua_toboolean(L,3)!=0;
-		else return luaL_error(L, "%s is not a valid member of Sprite",index.c_str());*/
-		//return 0;
+		return 0;
 	}
 	static int Sprite_GC(lua_State* L){
 		Sprite* s = (Sprite*)lua_touserdata(L,1);
@@ -183,7 +179,7 @@ namespace GameObject{
 
 	Camera::Camera():position(0,0),scale(1),rotation(0){}
 
-	static int Camera_Index(lua_State* L){
+	static int Camera_Index(lua_State* L){ //TODO: lua_option
 		Camera* cam = (Camera*)luaL_checkudata(L,1,"Camera");
 		string index = luaL_checkstring(L,2);
 		if (index == "Position")
@@ -197,7 +193,7 @@ namespace GameObject{
 		return 1;
 	}
 
-	static int Camera_NewIndex(lua_State* L){
+	static int Camera_NewIndex(lua_State* L){ //TODO: lua_option
 		Camera* cam = (Camera*)luaL_checkudata(L,1,"Camera");
 		string index = luaL_checkstring(L,2);
 		if (index == "Position"){

@@ -1,3 +1,4 @@
+--[[
 
 local file = io.open("test.bmp","wb")
 local count = 0
@@ -35,3 +36,24 @@ for y = 255, 0, -1 do
 end
 file:close()
 print(count)
+
+
+]]
+
+math.randomseed(os.time())
+
+local nums = {}
+for i = 1, 100 do nums[i] = i end
+
+local mines = {}
+for i = 1, 100 do
+	mines[i] = i
+end
+
+for i = 1, 10 do
+	local j = math.random(i,10)
+	print(nums[mines[j]])
+	--grid[mines[j][mines[j][2]].mine = true
+	mines[j] = mines[i]
+end
+minesGenerated = true

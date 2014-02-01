@@ -38,6 +38,7 @@ namespace GameObject{
 			modified = true;
 		}
 		inline int GetTextureHandle(){return textureHandle;}
+		inline unsigned char GetLayer(){return layer;}
 		inline void SetLayer(int newLayer){
 			layer = newLayer;
 			modified = true;

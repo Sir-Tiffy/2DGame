@@ -12,6 +12,7 @@ private:
 	int width, height;
 	bool fullscreen;
 	bool vsync;
+	bool resizable;
 
 	double currentTime;
 	double deltaTime;
@@ -52,6 +53,10 @@ private:
 	void GetInput();
 	void UpdatePhysics();
 	void UpdateLogic();
+	
+	friend int LuaScreen_Index(lua_State* L);
+	friend int LuaScreen_NewIndex(lua_State* L);
+	void RegisterLuaScreen(lua_State* L);
 	//void Render();
 protected:
 public:
@@ -69,6 +74,7 @@ public:
 	void RecalculateCamera(GameObject::Camera* camera);
 	void AddGameObject(GameObject::Sprite* sprite);
 	void RemoveGameObject(GameObject::Sprite* sprite);
+	void SetFullscreen(bool setting);
 	void ToggleFullscreen();
 	void BeginLoop();
 

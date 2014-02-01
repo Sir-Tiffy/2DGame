@@ -13,9 +13,14 @@ void Engine::UpdateLogic(){
 	RunScripts();
 }
 
-void Engine::ToggleFullscreen(){
+void Engine::SetFullscreen(bool setting){
 	renderer.CloseWindow();
-	currentWindow = renderer.OpenWindow(width, height, windowTitle, fullscreen = !fullscreen);
+	fullscreen = setting;
+	currentWindow = renderer.OpenWindow(width, height, windowTitle, fullscreen, resizable);
+}
+
+void Engine::ToggleFullscreen(){
+	return SetFullscreen(!fullscreen);
 }
 
 double Engine::CalculateTime(){
@@ -97,9 +102,9 @@ void Engine::RunScripts(){
 				MessageBox(NULL,"Attempt to yield from outside a coroutine!","Script error!",MB_DEFAULT_DESKTOP_ONLY);
 			}
 		} else {
-			threadObject.thread = nullptr;
-			luaL_unref(L,LUA_REGISTRYINDEX, threadObject.threadHandle);
 			if (msg != LUA_OK) MessageBox(NULL,lua_tostring(threadObject.thread,-1),"Script error!",MB_DEFAULT_DESKTOP_ONLY);
+			luaL_unref(L,LUA_REGISTRYINDEX, threadObject.threadHandle);
+			threadObject.thread = nullptr;
 		}
 	}
 	waitingLuaThreads.erase(std::remove_if(waitingLuaThreads.begin(),waitingLuaThreads.end(),[](ThreadObject thread){return thread.thread==nullptr;}),waitingLuaThreads.end());
@@ -122,15 +127,52 @@ void Engine::RunScripts(){
 	}*/
 }
 
+vector<string> GetAllFilesInDir(const char* dir, const char* ext){
+	vector<string> result;
+	WIN32_FIND_DATA data;
+	char path[MAX_PATH];
+	PathCombine(path, dir, ext);
+	HANDLE find = FindFirstFile(path, &data);
+	if (find != INVALID_HANDLE_VALUE){
+		do {
+			PathCombine(path,dir,data.cFileName);
+			result.emplace_back(path);
+		} while (FindNextFile(find, &data) != 0);
+		FindClose(find);
+	}
+	PathCombine(path, dir, "*");
+	find = FindFirstFile(path, &data);
+	if (find != INVALID_HANDLE_VALUE){
+		do {
+			if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY && data.cFileName[0] != '.'){
+				PathCombine(path,dir,data.cFileName);
+				vector<string> dirResult = GetAllFilesInDir(path, ext);
+				result.insert(result.end(), dirResult.begin(), dirResult.end());
+			}
+		} while (FindNextFile(find, &data) != 0);
+		FindClose(find);
+	}
+	return result;
+}
+
 void Engine::BeginLoop(){
 	double lastTime = currentTime = CalculateTime();
 	//if (luaL_dofile(L,"main.lua") != LUA_OK)
 	//	auto a = lua_tostring(L,1);
 	//BeginScripts();
-	{
+
+	lua_getglobal(L,"math");
+	lua_getfield(L,-1,"randomseed");
+	lua_pushnumber(L,GetTime());
+	lua_call(L,1,0);
+	lua_pop(L,1);
+
+	for (string& script:GetAllFilesInDir("scripts\\","*.lua")){
 		lua_State* thread = lua_newthread(L);
-		luaL_loadfile(thread,"scripts/main.lua");
-		StartScript(thread, 0);
+		if (luaL_loadfile(thread,script.c_str()) == LUA_OK)
+			StartScript(thread, 0);
+		else
+			MessageBox(NULL, lua_tostring(thread,-1), "Script error!", MB_DEFAULT_DESKTOP_ONLY);
 	}
 
 	while (running){
@@ -153,10 +195,11 @@ void Engine::OnWindowResize(int w, int h){
 }
 
 void Engine::ReadConfig(){
-	width = 800;
-	height = 600;
+	width = 20*30*2;//800;
+	height = 20*16*2;//600;
 	fullscreen = false;
 	vsync = true;
+	resizable = true;
 }
 
 /*static int RedirectedPrint(lua_State* L){
@@ -176,6 +219,7 @@ void Engine::ReadConfig(){
 	MessageBox(NULL,s.str().c_str(),"Print",MB_DEFAULT_DESKTOP_ONLY);
 	return 0;
 }*/
+
 static int RedirectedPrint (lua_State *L) {
 	stringstream stream;
 	int n = lua_gettop(L);	/* number of arguments */
@@ -188,9 +232,11 @@ static int RedirectedPrint (lua_State *L) {
 		lua_pushvalue(L, i);	 /* value to print */
 		lua_call(L, 1, 1);
 		s = lua_tolstring(L, -1, &l);	/* get result */
-		if (s == NULL)
+		if (s == NULL){
+			stream.~stream();
 			return luaL_error(L,
 				 LUA_QL("tostring") " must return a string to " LUA_QL("print"));
+		}
 		//if (i>1) luai_writestring("\t", 1);
 		if (i > 1) stream<<' ';
 		//luai_writestring(s, l);
@@ -246,9 +292,64 @@ void Engine::ReceiveEvent(const Event* event){
 	BroadcastEvent(event);
 }
 
-int test(lua_State*L){
-	lua_getfield(L,LUA_REGISTRYINDEX, "weak");
-	return 1;
+
+
+
+int LuaScreen_Index(lua_State* L){
+	const static char* indicies[] = {
+		"Width","Height","Fullscreen",
+		NULL
+	}; 
+	enum {
+		LUASCREEN_WIDTH,LUASCREEN_HEIGHT,LUASCREEN_FULLSCREEN
+	};	
+	switch(luaL_checkoption(L,2,NULL, indicies)){
+		case LUASCREEN_WIDTH:
+			lua_pushnumber(L,Engine::instance->width);
+			return 1;
+		case LUASCREEN_HEIGHT:
+			lua_pushnumber(L,Engine::instance->height);
+			return 1;
+		case LUASCREEN_FULLSCREEN:
+			lua_pushboolean(L,Engine::instance->fullscreen);
+			return 1;
+	}
+	return lua_error(L);
+}
+int LuaScreen_NewIndex(lua_State* L){
+	const static char* indicies[] = {
+		"Fullscreen",
+		NULL
+	}; 
+	enum {
+		LUASCREEN_FULLSCREEN
+	};	
+	switch(luaL_checkoption(L,2,NULL, indicies)){
+		/*case LUASCREEN_WIDTH:
+			Engine::instance->width = luaL_checkint(L,2);
+			return 0;
+		case LUASCREEN_HEIGHT:
+			Engine::instance->height = luaL_checkint(L,2);
+			return 0;*/
+		case LUASCREEN_FULLSCREEN:
+			if (!lua_isboolean(L,3)) return luaL_error(L,"bad argument to Fullscreen: bool expected, got (%s)",lua_typename(L,lua_type(L,2)));
+			Engine::instance->SetFullscreen(lua_toboolean(L,2)!=0);
+			return 0;
+	}
+	return lua_error(L);
+}
+
+void Engine::RegisterLuaScreen(lua_State* L){
+	const static luaL_Reg lib[] = {
+		{"__index",LuaScreen_Index},
+		{"__newindex",LuaScreen_NewIndex},
+		{NULL, NULL}
+	};
+	lua_newtable(L);
+	lua_createtable(L,0,2);
+	luaL_setfuncs(L,lib,0);
+	lua_setmetatable(L,-2);
+	lua_setglobal(L,"Screen");
 }
 
 Engine::Engine(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -275,16 +376,16 @@ Engine::Engine(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
 	lua_setfield(L,-2,"__mode");
 	lua_setmetatable(L,-2);
 	lua_setfield(L,LUA_REGISTRYINDEX, "weak");
-
-	lua_register(L,"test",test);
 	
 	luaL_requiref(L, "Sprite",GameObject::LuaLoadSprite,true);
 	luaL_requiref(L, "Vector2",Vec::LuaLoadVec2,true);
 	luaL_requiref(L, "Vector3",Vec::LuaLoadVec3,true);
 	luaL_requiref(L, "Vector4",Vec::LuaLoadVec4,true);
 	luaL_requiref(L, "Texture",Texture::LuaLoadTexture,true);
+
 	lua_pop(L,5);
 	GameObject::LuaLoadCamera(L);
+	RegisterLuaScreen(L);
 	input.RegisterLuaEventHandler(L);
 	
 	ReadConfig();
@@ -292,7 +393,7 @@ Engine::Engine(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
 	renderer.Init(hInstance, nCmdShow, input.GetWndProc());
 
 	
-	currentWindow = renderer.OpenWindow(width,height, windowTitle, fullscreen);
+	currentWindow = renderer.OpenWindow(width,height, windowTitle, fullscreen, resizable);
 	vsync = renderer.SetVsync(vsync);
 
 	input.RegisterObserver(this,EVENT_ALL);

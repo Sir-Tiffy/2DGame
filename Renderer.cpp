@@ -99,9 +99,10 @@ static void CheckProgram(GLuint program, const char* msg){
 	throw runtime_error(log.data());
 }
 
-WindowHandle Renderer::OpenWindow(int width, int height, std::string windowTitle, bool fullscreen){
+WindowHandle Renderer::OpenWindow(int width, int height, std::string windowTitle, bool fullscreen, bool resizable){
 	this->width = width;
 	this->height = height;
+	this->resizable = resizable;
 	this->windowTitle = windowTitle;
 	if (currentWindow != nullptr) throw logic_error("Attempted to open a window with one already open!");
 
@@ -123,7 +124,7 @@ WindowHandle Renderer::OpenWindow(int width, int height, std::string windowTitle
 		settings.dmFields = DM_PELSHEIGHT|DM_PELSWIDTH|DM_BITSPERPEL;
 		if (ChangeDisplaySettings(&settings, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL) fullscreen = false;
 	}
-	style = fullscreen?WS_POPUP:(WS_OVERLAPPEDWINDOW/*^WS_THICKFRAME^WS_MAXIMIZEBOX*/);
+	style = fullscreen?WS_POPUP:(WS_OVERLAPPEDWINDOW^((!resizable)*(WS_THICKFRAME^WS_MAXIMIZEBOX)));
 	exStyle = WS_EX_APPWINDOW|(fullscreen*WS_EX_WINDOWEDGE);
 	this->fullscreen = fullscreen;
 
@@ -293,10 +294,12 @@ void Renderer::InitGL(){
 
 void Renderer::Render(vector<GameObject::Sprite*>& sprites){
 	glClear(GL_COLOR_BUFFER_BIT);
-	
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	if (sprites.size() > 0){
 
-		glEnable(GL_TEXTURE_2D);
+	//	glEnable(GL_TEXTURE_2D);
 	//	glActiveTexture(GL_TEXTURE0);
 
 		//load shader
@@ -308,8 +311,37 @@ void Renderer::Render(vector<GameObject::Sprite*>& sprites){
 		if (prog == 0){
 			vert = glCreateShader(GL_VERTEX_SHADER);
 			frag = glCreateShader(GL_FRAGMENT_SHADER);
-			glShaderSource(vert, 1, &VERT, 0);
-			glShaderSource(frag,1, &FRAG, 0);
+
+			
+			ifstream f("shaders/vertex.glsl",ios::in);
+			if (!f.good()) throw runtime_error("Failed to open shaders/vertex.glsl!" ERROR_INFO);
+			f.seekg(0,ios::end);
+			unsigned int filesize = (unsigned int)f.tellg();
+			if (filesize == 0) throw runtime_error("shaders/vertex.glsl is empty!" ERROR_INFO);
+			f.seekg(0,ios::beg);
+			vector<char> data(filesize);
+			f.read(data.data(),filesize);
+			f.close();
+			const char* ptr = data.data();
+			glShaderSource(vert,1,&(ptr),0);
+			data.clear();
+
+			f.open("shaders/fragment.glsl",ios::in);
+			if (!f.good()) throw runtime_error("Failed to open shaders/fragment.glsl!" ERROR_INFO);
+			f.seekg(0,ios::end);
+			filesize = (unsigned int)f.tellg();
+			if (filesize == 0) throw runtime_error("shaders/vertex.glsl is empty!" ERROR_INFO);
+			f.seekg(0,ios::beg);
+			data.resize(filesize);
+			f.read(data.data(),filesize);
+			f.close();
+			ptr = data.data();
+			glShaderSource(frag,1,&ptr,0);
+
+
+
+			//glShaderSource(vert, 1, &VERT, 0);
+			//glShaderSource(frag,1, &FRAG, 0);
 			glCompileShader(vert);
 				CheckShader(vert,"Failed to compile vertex shader!" ERROR_INFO);
 			glCompileShader(frag);
@@ -343,25 +375,29 @@ void Renderer::Render(vector<GameObject::Sprite*>& sprites){
 
 		vector<float> data;
 		unsigned int numVerts = 0;	
-		unsigned int key = sprites[0]->GetSortKey();
-		if (sprites[0]->GetTexture() != nullptr){
-			glActiveTexture(GL_TEXTURE0);
-			glUniform1i(texUniform,0);
-			glBindTexture(GL_TEXTURE_2D,sprites[0]->GetTexture()->textureHandle);
-		} else glBindTexture(GL_TEXTURE_2D, 0);
+		unsigned int key = -1;
+
+		unsigned int currentTextureHandle = 0;
+
 		for (GameObject::Sprite* s:sprites){
 			if (!s->visible) continue;
 			if (s->GetSortKey() != key){
-				glBufferData(GL_ARRAY_BUFFER, data.size()*sizeof(float), data.data(), GL_STREAM_DRAW);
-				glDrawArrays(GL_TRIANGLES,0,numVerts);
-				numVerts = 0;
-				data.clear();
+				if (numVerts){
+					glBufferData(GL_ARRAY_BUFFER, data.size()*sizeof(float), data.data(), GL_STREAM_DRAW);
+					glDrawArrays(GL_TRIANGLES,0,numVerts);
+					data.clear();
+					numVerts = 0;
+				}
 				key = s->GetSortKey();
-				if (s->GetTexture() != nullptr){
+				if (s->GetTexture() != nullptr && s->GetTexture()->textureHandle != currentTextureHandle){
 					glActiveTexture(GL_TEXTURE0);
 					glUniform1i(texUniform,0);
-					glBindTexture(GL_TEXTURE_2D,s->GetTexture()->textureHandle);
-				} else glBindTexture(GL_TEXTURE_2D, 0);
+					glEnable(GL_TEXTURE_2D);
+					glBindTexture(GL_TEXTURE_2D,currentTextureHandle = s->GetTexture()->textureHandle);
+				} else {
+					glBindTexture(GL_TEXTURE_2D, 0);
+					glDisable(GL_TEXTURE_2D);
+				}
 				
 			}
 
@@ -375,10 +411,10 @@ void Renderer::Render(vector<GameObject::Sprite*>& sprites){
 			const float r = s->colour.r;
 			const float g = s->colour.g;
 			const float b = s->colour.b;
-			const float uvX0 = 0;//s->UV.x;
-			const float uvY0 = 0;//s->UV.y;
-			const float uvX1 = 1;//s->UV.z;
-			const float uvY1 = 1;//s->UV.w;
+			const float uvX0 = s->UV.x;
+			const float uvY0 = s->UV.y;
+			const float uvX1 = s->UV.z;
+			const float uvY1 = s->UV.w;
 
 			data.emplace_back(x0);
 			data.emplace_back(y0);
@@ -428,8 +464,10 @@ void Renderer::Render(vector<GameObject::Sprite*>& sprites){
 			data.emplace_back(uvX1);
 			data.emplace_back(uvY1);
 		}
-		glBufferData(GL_ARRAY_BUFFER, data.size()*sizeof(float), data.data(), GL_STREAM_DRAW);
-		glDrawArrays(GL_TRIANGLES,0,numVerts);
+		if (numVerts){
+			glBufferData(GL_ARRAY_BUFFER, data.size()*sizeof(float), data.data(), GL_STREAM_DRAW);
+			glDrawArrays(GL_TRIANGLES,0,numVerts);
+		}
 
 	}
 	CheckGLError("Error rendering scene!");
@@ -551,6 +589,7 @@ Renderer::Renderer():
 	hInstance(nullptr),
 	fullscreen(false),
 	vsync(false),
+	resizable(false),
 	width(800),
 	height(600),
 	projectionMatrix(mat4::identity),
@@ -570,24 +609,29 @@ Renderer::~Renderer(){
 	UnregisterClass(WINDOW_CLASSNAME, hInstance);
 }
 
-void Renderer::UploadTexture(lua_State* L, Texture::Texture* tex, vector<char>& data, int width, int height, short bpp){
+bool Renderer::UploadTexture(lua_State* L, Texture::Texture* tex, vector<char>& data){
 	GLuint& textureHandle = tex->textureHandle;
 	glGenTextures(1,&textureHandle);
 	glBindTexture(GL_TEXTURE_2D, textureHandle);
-	switch(bpp){
-		case 24: bpp = GL_RGB; break;
-		case 32: bpp = GL_RGBA; break;
-		default: bpp = 0;
-	}
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width,height,0, GL_BGR_EXT, GL_UNSIGNED_BYTE, data.data());
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->width,tex->height,0, tex->bitmapFormat, GL_UNSIGNED_BYTE, data.data());
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 
-	if (glGetError() != GL_NO_ERROR) luaL_error(L, "Failed to load texture '%s': Error uploading texture!",tex->filename.data());
+	if (glGetError() != GL_NO_ERROR){
+		lua_pushfstring(L, "Failed to load texture '%s': Error uploading texture!",tex->filename.data());
+		return true;
+	}
+	return false;
+}
+
+void Renderer::SetTextureFilter(Texture::Texture* tex, TextureFilter filter){
+	glBindTexture(GL_TEXTURE_2D, tex->textureHandle);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
 void Renderer::DeleteTexture(Texture::Texture* tex){

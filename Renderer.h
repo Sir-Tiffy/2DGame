@@ -10,7 +10,8 @@ private:
 		height;
 	bool
 		vsync,
-		fullscreen;
+		fullscreen,
+		resizable;
 	std::string windowTitle;
 	WindowHandle currentWindow;
 
@@ -35,10 +36,17 @@ private:
 
 public:
 	//opens a window and returns the window handle
-	WindowHandle OpenWindow(int width, int height, std::string title, bool fullscreen);
+	WindowHandle OpenWindow(int width, int height, std::string title, bool fullscreen, bool resizable);
 
 
-	static void UploadTexture(lua_State* L, Texture::Texture* tex, std::vector<char>& data, int width, int height, short bpp);
+	static bool UploadTexture(lua_State* L, Texture::Texture* tex, std::vector<char>& data);
+
+	enum TextureFilter{
+		LINEAR = GL_LINEAR,
+		NEAREST = GL_NEAREST
+	};
+
+	static void SetTextureFilter(Texture::Texture* tex, TextureFilter filter);
 	static void DeleteTexture(Texture::Texture* tex);
 
 	//close the current open window
