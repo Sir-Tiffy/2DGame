@@ -63,9 +63,9 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		case WM_DESTROY:
 			PostQuitMessage(0);
 			break;
-		case WM_PAINT: 
+		/*case WM_PAINT: 
 			Engine::instance->Render();
-			return DefWindowProc(hWnd,msg,wParam,lParam);;
+			return DefWindowProc(hWnd,msg,wParam,lParam);*/
 		default:
 			return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
