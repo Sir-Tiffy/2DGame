@@ -117,7 +117,12 @@ local function Logic()
 			count = count + 1
 		end
 		if closed then
-			if playing and delay > 0 then wait(delay) end
+			if playing and delay > 0 then
+				for i = 1, 3 do
+					wait(delay/3)
+					if not playing then return end
+				end
+			end
 			ColourSquare(s.x,s.y,Vector3.new(.1,.1,.1))
 		else
 			ColourSquare(s.x,s.y,Vector3.new(1,1,1))
