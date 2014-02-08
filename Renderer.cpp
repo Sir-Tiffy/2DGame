@@ -191,7 +191,7 @@ void Renderer::SetResizable(bool resizable){
 	this->resizable = resizable;
 	if (fullscreen) return;
 	const auto style = GetWindowLong(currentWindow,GWL_STYLE);
-	SetWindowLong(currentWindow, GWL_STYLE, (style&(~(WS_THICKFRAME|WS_MAXIMIZEBOX)))|(resizable?0:WS_THICKFRAME|WS_MAXIMIZEBOX));
+	SetWindowLong(currentWindow, GWL_STYLE, (style&(~(WS_THICKFRAME|WS_MAXIMIZEBOX)))|(resizable*(WS_THICKFRAME|WS_MAXIMIZEBOX)));
 	SetWindowPos(currentWindow,HWND_TOP,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE|SWP_FRAMECHANGED);
 }
 
