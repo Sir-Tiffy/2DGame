@@ -13,7 +13,7 @@ void Engine::UpdateLogic(){
 	RunScripts();
 }
 
-void Engine::SetFullscreen(bool setting){
+/*void Engine::SetFullscreen(bool setting){
 	renderer.CloseWindow();
 	fullscreen = setting;
 	currentWindow = renderer.OpenWindow(width, height, windowTitle, fullscreen, resizable);
@@ -21,7 +21,7 @@ void Engine::SetFullscreen(bool setting){
 
 void Engine::ToggleFullscreen(){
 	return SetFullscreen(!fullscreen);
-}
+}*/
 
 double Engine::CalculateTime(){
 	LARGE_INTEGER largeInteger;
@@ -88,8 +88,8 @@ void Engine::StartScript(lua_State* thread, unsigned int args){
 void Engine::RunScripts(){
 	for (ThreadObject& threadObject:waitingLuaThreads){
 		if (threadObject.waitTime > currentTime) continue;
-		lua_pushnumber(threadObject.thread,currentTime);
 		lua_pushnumber(threadObject.thread,deltaTime);
+		lua_pushnumber(threadObject.thread,currentTime);
 		lua_checkstack(threadObject.thread,2); //CHECK
 		const int msg = lua_resume(threadObject.thread,NULL,2);
 		if (msg == LUA_YIELD){
@@ -155,6 +155,10 @@ vector<string> GetAllFilesInDir(const char* dir, const char* ext){
 	return result;
 }
 
+void Engine::Render(){
+	return renderer.Render(objects);
+}
+
 void Engine::BeginLoop(){
 	double lastTime = currentTime = CalculateTime();
 	//if (luaL_dofile(L,"main.lua") != LUA_OK)
@@ -183,7 +187,8 @@ void Engine::BeginLoop(){
 
 		UpdatePhysics();
 		UpdateLogic();
-		renderer.Render(objects);
+		Render();
+		//renderer.Render(objects);
 	}
 	renderer.CloseWindow();
 }
@@ -295,15 +300,15 @@ void Engine::ReceiveEvent(const Event* event){
 
 
 
+const static char* const LUASCREEN_INDICIES[] = {
+	"Width","Height","Fullscreen","Resizable",
+	NULL
+}; 
+enum {
+	LUASCREEN_WIDTH,LUASCREEN_HEIGHT,LUASCREEN_FULLSCREEN,LUASCREEN_RESIZABLE
+};	
 int LuaScreen_Index(lua_State* L){
-	const static char* indicies[] = {
-		"Width","Height","Fullscreen",
-		NULL
-	}; 
-	enum {
-		LUASCREEN_WIDTH,LUASCREEN_HEIGHT,LUASCREEN_FULLSCREEN
-	};	
-	switch(luaL_checkoption(L,2,NULL, indicies)){
+	switch(luaL_checkoption(L,2,NULL, LUASCREEN_INDICIES)){
 		case LUASCREEN_WIDTH:
 			lua_pushnumber(L,Engine::instance->width);
 			return 1;
@@ -313,11 +318,43 @@ int LuaScreen_Index(lua_State* L){
 		case LUASCREEN_FULLSCREEN:
 			lua_pushboolean(L,Engine::instance->fullscreen);
 			return 1;
+		case LUASCREEN_RESIZABLE:
+			lua_pushboolean(L,Engine::instance->resizable);
+			return 1;
 	}
 	return lua_error(L);
 }
+
+void Engine::SetWidth(int newWidth){
+	renderer.ResizeWindow(width = newWidth,height);
+}
+
+void Engine::SetHeight(int newHeight){
+	renderer.ResizeWindow(width,height = newHeight);
+}
+
+void Engine::SetResizable(bool newResizable){
+	renderer.SetResizable(resizable=newResizable);
+}
+
 int LuaScreen_NewIndex(lua_State* L){
-	const static char* indicies[] = {
+	switch(luaL_checkoption(L,2,NULL,LUASCREEN_INDICIES)){
+		case LUASCREEN_WIDTH:
+			Engine::instance->SetWidth(luaL_checkint(L,3));
+			return 0;
+		case LUASCREEN_HEIGHT:
+			Engine::instance->SetHeight(luaL_checkint(L,3));
+			return 0;
+		case LUASCREEN_FULLSCREEN:
+			//lua_pushboolean(L,Engine::instance->fullscreen);
+			//return 1;
+			return luaL_error(L,"Setting window fullscreen is not yet supported!");
+		case LUASCREEN_RESIZABLE:
+			Engine::instance->SetResizable(lua_toboolean(L,3)!=0);
+			return 0;
+	}
+	return lua_error(L);
+	/*const static char* indicies[] = {
 		"Fullscreen",
 		NULL
 	}; 
@@ -325,18 +362,18 @@ int LuaScreen_NewIndex(lua_State* L){
 		LUASCREEN_FULLSCREEN
 	};	
 	switch(luaL_checkoption(L,2,NULL, indicies)){
-		/*case LUASCREEN_WIDTH:
-			Engine::instance->width = luaL_checkint(L,2);
-			return 0;
-		case LUASCREEN_HEIGHT:
-			Engine::instance->height = luaL_checkint(L,2);
-			return 0;*/
+		//case LUASCREEN_WIDTH:
+		//	Engine::instance->width = luaL_checkint(L,2);
+		//	return 0;
+		//case LUASCREEN_HEIGHT:
+		//	Engine::instance->height = luaL_checkint(L,2);
+		//	return 0;
 		case LUASCREEN_FULLSCREEN:
 			if (!lua_isboolean(L,3)) return luaL_error(L,"bad argument to Fullscreen: bool expected, got (%s)",lua_typename(L,lua_type(L,2)));
 			Engine::instance->SetFullscreen(lua_toboolean(L,2)!=0);
 			return 0;
 	}
-	return lua_error(L);
+	return lua_error(L);*/
 }
 
 void Engine::RegisterLuaScreen(lua_State* L){

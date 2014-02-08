@@ -53,6 +53,11 @@ private:
 	void GetInput();
 	void UpdatePhysics();
 	void UpdateLogic();
+	void Render();
+
+	void SetHeight(int height);
+	void SetWidth(int width);
+	void SetResizable(bool resizable);
 	
 	friend int LuaScreen_Index(lua_State* L);
 	friend int LuaScreen_NewIndex(lua_State* L);
@@ -74,8 +79,8 @@ public:
 	void RecalculateCamera(GameObject::Camera* camera);
 	void AddGameObject(GameObject::Sprite* sprite);
 	void RemoveGameObject(GameObject::Sprite* sprite);
-	void SetFullscreen(bool setting);
-	void ToggleFullscreen();
+	//void SetFullscreen(bool setting);
+	//void ToggleFullscreen();
 	void BeginLoop();
 
 	//Engine(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);

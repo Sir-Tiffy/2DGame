@@ -1,26 +1,33 @@
 #pragma once
 
-const static char* VERT =
-"#version 150\n"
-"in vec2 in_Position;\n"
-"in vec3 in_Colour;\n\
-in vec2 in_UV;\n\
-out vec3 out_colour;\n\
-out vec2 out_UV;\n\
-uniform mat4 vp;\n\
-void main(void){;\n\
-out_colour = in_Colour;\n\
-out_UV = in_UV;\n\
-gl_Position=vp*vec4(in_Position,0,1);\n\
-}";
+class Shader{
+protected:
+	static Shader* currentShader;
+	GLuint frag, vert, prog;
+	virtual void BindAttribLocations()=0;
+	virtual void GetUniformLocations()=0;
+public:
+	virtual bool UseProgram();
+	void CreateShader(std::string fragmentFilename, std::string vertexFilename);
+};
 
-const static char* FRAG = 
-"#version 150\n\
-precision highp float;\n\
-in vec3 out_colour;\n\
-in vec2 out_UV;\n\
-out vec4 fragColour;\
-uniform sampler2D tex;\n\
-void main(void){\n\
-fragColour = texture2D(tex,out_UV)*vec4(out_colour,1);\n\
-}";
+class TexturedShader:public Shader{
+protected:
+	GLuint vpUniformLocation, texUniformLocation;
+	virtual void BindAttribLocations() override;
+	virtual void GetUniformLocations() override;
+public:
+	void UploadVPMatrix(bool transpose, const float* data);
+	void BindTexture(GLuint textureHandle);
+	virtual bool UseProgram() override;
+};
+
+class UntexturedShader:public Shader{
+protected:
+	GLuint vpUniformLocation;
+	virtual void BindAttribLocations() override;
+	virtual void GetUniformLocations() override;
+public:
+	void UploadVPMatrix(bool transpose, const float* data);
+	virtual bool UseProgram() override;
+};

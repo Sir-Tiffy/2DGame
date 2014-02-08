@@ -20,7 +20,7 @@ namespace GameObject{
 		Texture::Texture* texture;
 	public:
 		Vec::vec4 UV;
-		Vec::vec3 colour;
+		Vec::vec4 colour;
 		Vec::vec2 position;
 		Vec::vec2 size;
 		int lua_handle;

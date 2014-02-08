@@ -5,100 +5,6 @@
 using namespace std;
 using namespace Vec;
 
-static void (APIENTRY* glGetShaderiv)(GLuint shader, GLenum name, GLint* params);
-static void (APIENTRY* glGetShaderInfoLog)(GLuint shader, int maxLength, int* length, char* log);
-static void (APIENTRY* glGetProgramiv)(GLuint program, GLenum name, GLint* params);
-static void (APIENTRY* glGetProgramInfoLog)(GLuint program, int maxLength, int* length, char* log);
-static bool (APIENTRY* wglSwapIntervalExt)(int);
-static void (APIENTRY* glGenBuffers)(GLsizei n, GLuint* buffers);
-static void (APIENTRY* glBindBuffer)(GLenum target, GLuint buffer);
-static void (APIENTRY* glBufferData)(GLenum target, int size, const void* data, GLenum usage);
-static void (APIENTRY* glVertexAttribPointer)(GLuint index, GLint size, GLenum type, GLboolean normalize, GLsizei stride, const void* pointer);
-static void (APIENTRY* glEnableVertexAttribArray)(GLuint index);
-static GLuint (APIENTRY* glCreateShader)(GLenum target);
-static void (APIENTRY* glShaderSource)(GLuint shader, GLsizei count, const char** string, GLint length);
-static void (APIENTRY* glCompileShader)(GLuint shader);
-static GLuint (APIENTRY* glCreateProgram)();
-static void (APIENTRY* glAttachShader)(GLuint program, GLuint shader);
-static void (APIENTRY* glBindAttribLocation)(GLuint program, GLuint index, char* name);
-static void (APIENTRY* glLinkProgram)(GLuint program);
-static void (APIENTRY* glUseProgram)(GLuint program);
-static GLint (APIENTRY* glGetUniformLocation)(GLuint program, const char* name);
-static void (APIENTRY* glUniformMatrix4fv)(GLint location, int count, GLboolean transpose, const GLfloat* value);
-static void (APIENTRY* glActiveTexture)(GLenum texture);
-static void (APIENTRY* glUniform1i)(GLint location, GLint v0);
-
-const static int GL_COMPILE_STATUS = 0x8b81;
-const static int GL_LINK_STATUS = 0x8b82;
-const static int GL_ARRAY_BUFFER = 0x8892;
-const static int GL_STREAM_DRAW = 0x88e0;
-const static int GL_STATIC_DRAW = 0x88e4;
-const static int GL_VERTEX_SHADER = 0x8b31;
-const static int GL_FRAGMENT_SHADER = 0x8b30;
-const static int GL_INFO_LOG_LENGTH = 0x8b84;
-const static int GL_TEXTURE0 = 0x84c0;
-
-static void GetGLFuncs(){
-	const char* const extensions = (const char*)glGetString(GL_EXTENSIONS);
-	//vsyncEnabled = strstr(extensions, "WGL_EXT_swap_control")!=0;
-	glGetShaderiv = (void (APIENTRY*)(GLuint shader, GLenum name, GLint* params))wglGetProcAddress("glGetShaderiv");
-	glGetShaderInfoLog = (void (APIENTRY*)(GLuint shader, int maxLength, int* length, char* log))wglGetProcAddress("glGetShaderInfoLog");
-	glGetProgramiv = (void (APIENTRY*)(GLuint program, GLenum name, GLint* params))wglGetProcAddress("glGetProgramiv");
-	glGetProgramInfoLog = (void (APIENTRY*)(GLuint program, int maxLength, int* length, char* log))wglGetProcAddress("glGetProgramInfoLog");
-	wglSwapIntervalExt = (bool (APIENTRY*)(int))wglGetProcAddress("wglSwapIntervalEXT");
-	glGenBuffers = (void (APIENTRY*)(GLsizei n, GLuint* buffers))wglGetProcAddress("glGenBuffers");
-	glBindBuffer = (void(APIENTRY*)(GLenum target, GLuint buffer))wglGetProcAddress("glBindBuffer");
-	glBufferData = (void(APIENTRY*)(GLenum target, int size, const void* data, GLenum usage))wglGetProcAddress("glBufferData");
-	glVertexAttribPointer = (void(APIENTRY*)(GLuint index, GLint size, GLenum type, GLboolean normalize, GLsizei stride, const void* pointer))wglGetProcAddress("glVertexAttribPointer");
-	glEnableVertexAttribArray = (void(APIENTRY*)(GLuint index))wglGetProcAddress("glEnableVertexAttribArray");
-	glCreateShader = (GLuint (APIENTRY*)(GLenum target))wglGetProcAddress("glCreateShader");
-	glShaderSource = (void (APIENTRY*)(GLuint shader, GLsizei count, const char** string, GLint length))wglGetProcAddress("glShaderSource");
-	glCompileShader = (void (APIENTRY*)(GLuint shader))wglGetProcAddress("glCompileShader");
-	glCreateProgram = (GLuint (APIENTRY*)())wglGetProcAddress("glCreateProgram");
-	glAttachShader = (void (APIENTRY*)(GLuint program, GLuint shader))wglGetProcAddress("glAttachShader");
-	glBindAttribLocation = (void (APIENTRY*)(GLuint program, GLuint index, char* name))wglGetProcAddress("glBindAttribLocation");
-	glLinkProgram = (void (APIENTRY*)(GLuint program))wglGetProcAddress("glLinkProgram");
-	glUseProgram = (void (APIENTRY*)(GLuint program))wglGetProcAddress("glUseProgram");
-	glGetUniformLocation = (GLint (APIENTRY*)(GLuint program, const char* name))wglGetProcAddress("glGetUniformLocation");
-	glUniformMatrix4fv = (void (APIENTRY*)(GLint location, int count, GLboolean transpose, const GLfloat* value))wglGetProcAddress("glUniformMatrix4fv");
-	glActiveTexture = (void (APIENTRY*)(GLenum texture))wglGetProcAddress("glActiveTexture");
-	glUniform1i = (void ( APIENTRY*)(GLint location, GLint v0))wglGetProcAddress("glUniform1i");
-}
-
-static void CheckGLError(const char* msg){
-	const auto code = glGetError();
-	if (code == GL_NO_ERROR) return;
-	throw runtime_error(msg);
-}
-
-#define CheckGLError(msg) CheckGLError(msg ERROR_INFO)
-
-static void CheckShader(GLuint shader, const char* msg){
-	GLint status;
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
-	if (status != GL_NO_ERROR) return;
-	glGetShaderiv(shader,GL_INFO_LOG_LENGTH, &status);
-	const auto errLength = strlen(msg);
-	vector<char> log(status+errLength+1);
-	for (unsigned int i = 0; i <= errLength; ++i) log[i] = msg[i];
-	log[errLength] = '\n';
-	glGetShaderInfoLog(shader, status, &status, log.data()+errLength+1);
-	throw runtime_error(log.data());
-}
-
-static void CheckProgram(GLuint program, const char* msg){
-	GLint status;
-	glGetProgramiv(program, GL_LINK_STATUS, &status);
-	if (status != GL_NO_ERROR) return;
-	glGetProgramiv(program,GL_INFO_LOG_LENGTH, &status);
-	const auto errLength = strlen(msg);
-	vector<char> log(status+errLength+1);
-	for (unsigned int i = 0; i <= errLength; ++i) log[i] = msg[i];
-	log[errLength] = '\n';
-	glGetProgramInfoLog(program, status, &status, log.data()+errLength+1);
-	throw runtime_error(log.data());
-}
-
 WindowHandle Renderer::OpenWindow(int width, int height, std::string windowTitle, bool fullscreen, bool resizable){
 	this->width = width;
 	this->height = height;
@@ -124,7 +30,7 @@ WindowHandle Renderer::OpenWindow(int width, int height, std::string windowTitle
 		settings.dmFields = DM_PELSHEIGHT|DM_PELSWIDTH|DM_BITSPERPEL;
 		if (ChangeDisplaySettings(&settings, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL) fullscreen = false;
 	}
-	style = fullscreen?WS_POPUP:(WS_OVERLAPPEDWINDOW^((!resizable)*(WS_THICKFRAME^WS_MAXIMIZEBOX)));
+	style = fullscreen?WS_POPUP:(WS_OVERLAPPEDWINDOW^((!resizable)*(WS_THICKFRAME|WS_MAXIMIZEBOX)));
 	exStyle = WS_EX_APPWINDOW|(fullscreen*WS_EX_WINDOWEDGE);
 	this->fullscreen = fullscreen;
 
@@ -276,6 +182,19 @@ void Renderer::OnWindowResize(int width, int height){
 	//RecalculateCamera(cameraPosition,cameraScale, nearZ, farZ);
 }
 
+void Renderer::ResizeWindow(int width, int height){
+	SetWindowPos(currentWindow,HWND_TOP,0,0,width,height,SWP_NOZORDER|SWP_NOMOVE);
+	return OnWindowResize(width,height);
+}
+
+void Renderer::SetResizable(bool resizable){
+	this->resizable = resizable;
+	if (fullscreen) return;
+	const auto style = GetWindowLong(currentWindow,GWL_STYLE);
+	SetWindowLong(currentWindow, GWL_STYLE, (style&(~(WS_THICKFRAME|WS_MAXIMIZEBOX)))|(resizable?0:WS_THICKFRAME|WS_MAXIMIZEBOX));
+	SetWindowPos(currentWindow,HWND_TOP,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE|SWP_FRAMECHANGED);
+}
+
 void Renderer::InitGL(){
 	GetGLFuncs();
 	glClearColor(0,0,0,0);
@@ -290,9 +209,13 @@ void Renderer::InitGL(){
 	SetVsync(vsync);
 
 	glGenBuffers(1,&renderBufferObject);
+	
+	texturedShader.CreateShader("shaders/texturedF.glsl","shaders/texturedV.glsl");
+	untexturedShader.CreateShader("shaders/untexturedF.glsl","shaders/untexturedV.glsl");
 }
 
 void Renderer::Render(vector<GameObject::Sprite*>& sprites){
+	CheckGLError("Unknown error before rendering");
 	glClear(GL_COLOR_BUFFER_BIT);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -302,76 +225,27 @@ void Renderer::Render(vector<GameObject::Sprite*>& sprites){
 	//	glEnable(GL_TEXTURE_2D);
 	//	glActiveTexture(GL_TEXTURE0);
 
-		//load shader
-		static GLuint vert = 0;
-		static GLuint frag = 0;
-		static GLuint prog = 0;
-		static GLuint vpUniform = 0;
-		static GLuint texUniform = 0;
-		if (prog == 0){
-			vert = glCreateShader(GL_VERTEX_SHADER);
-			frag = glCreateShader(GL_FRAGMENT_SHADER);
 
-			
-			ifstream f("shaders/vertex.glsl",ios::in);
-			if (!f.good()) throw runtime_error("Failed to open shaders/vertex.glsl!" ERROR_INFO);
-			f.seekg(0,ios::end);
-			unsigned int filesize = (unsigned int)f.tellg();
-			if (filesize == 0) throw runtime_error("shaders/vertex.glsl is empty!" ERROR_INFO);
-			f.seekg(0,ios::beg);
-			vector<char> data(filesize);
-			f.read(data.data(),filesize);
-			f.close();
-			const char* ptr = data.data();
-			glShaderSource(vert,1,&(ptr),0);
-			data.clear();
-
-			f.open("shaders/fragment.glsl",ios::in);
-			if (!f.good()) throw runtime_error("Failed to open shaders/fragment.glsl!" ERROR_INFO);
-			f.seekg(0,ios::end);
-			filesize = (unsigned int)f.tellg();
-			if (filesize == 0) throw runtime_error("shaders/vertex.glsl is empty!" ERROR_INFO);
-			f.seekg(0,ios::beg);
-			data.resize(filesize);
-			f.read(data.data(),filesize);
-			f.close();
-			ptr = data.data();
-			glShaderSource(frag,1,&ptr,0);
-
-
-
-			//glShaderSource(vert, 1, &VERT, 0);
-			//glShaderSource(frag,1, &FRAG, 0);
-			glCompileShader(vert);
-				CheckShader(vert,"Failed to compile vertex shader!" ERROR_INFO);
-			glCompileShader(frag);
-				CheckShader(frag,"Failed to copmile fragment shader!" ERROR_INFO);
-
-			prog = glCreateProgram();
-			glAttachShader(prog,vert);
-			glAttachShader(prog,frag);
-			glBindAttribLocation(prog,0,"in_Position");
-			glBindAttribLocation(prog,1,"in_Colour");
-			glBindAttribLocation(prog,2,"in_UV");
-			glLinkProgram(prog);
-				CheckProgram(prog, "Failed to link shader program!" ERROR_INFO);
-
-			vpUniform = glGetUniformLocation(prog, "vp");
-			texUniform = glGetUniformLocation(prog,"teq");
-		}
-		glUseProgram(prog);
+		//upload view/projection matrix to shaders
 		const mat4 vp = projectionMatrix*viewMatrix;
-		glUniformMatrix4fv(vpUniform, 1, true, (float*)&vp.data);
+		untexturedShader.UseProgram();
+		CheckGLError("Error using untextured shader");
+		untexturedShader.UploadVPMatrix(true,(float*)&vp.data);
+		CheckGLError("Error uploading matrix to untextured shader");
+		texturedShader.UseProgram();
+		CheckGLError("Error using untextured shader");
+		texturedShader.UploadVPMatrix(true,(float*)&vp.data);
+		CheckGLError("Error uploading matrix to untextured shader");
 
 		std::sort(sprites.begin(), sprites.end(), [](GameObject::Sprite* left, GameObject::Sprite* right){return left->GetSortKey() < right->GetSortKey();});
 
 		glBindBuffer(GL_ARRAY_BUFFER, renderBufferObject);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, (2+3+2)*sizeof(float), 0); //position
+		/*glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, (2+4+2)*sizeof(float), 0); //position
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, (2+3+2)*sizeof(float), (void*)(2*sizeof(float))); //colour
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, (2+4+2)*sizeof(float), (void*)(2*sizeof(float))); //colour
 		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, (2+3+2)*sizeof(float), (void*)(5*sizeof(float))); //uv
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, (2+4+2)*sizeof(float), (void*)((2+4)*sizeof(float))); //uv*/
 
 		vector<float> data;
 		unsigned int numVerts = 0;	
@@ -381,6 +255,7 @@ void Renderer::Render(vector<GameObject::Sprite*>& sprites){
 
 		for (GameObject::Sprite* s:sprites){
 			if (!s->visible) continue;
+			const bool textured = s->GetTexture() != nullptr;
 			if (s->GetSortKey() != key){
 				if (numVerts){
 					glBufferData(GL_ARRAY_BUFFER, data.size()*sizeof(float), data.data(), GL_STREAM_DRAW);
@@ -389,20 +264,42 @@ void Renderer::Render(vector<GameObject::Sprite*>& sprites){
 					numVerts = 0;
 				}
 				key = s->GetSortKey();
-				if (s->GetTexture() != nullptr && s->GetTexture()->textureHandle != currentTextureHandle){
-					glActiveTexture(GL_TEXTURE0);
-					glUniform1i(texUniform,0);
-					glEnable(GL_TEXTURE_2D);
-					glBindTexture(GL_TEXTURE_2D,currentTextureHandle = s->GetTexture()->textureHandle);
+				if (textured){
+					if (s->GetTexture()->textureHandle != currentTextureHandle){
+						if (texturedShader.UseProgram()){
+							glEnableVertexAttribArray(0);
+							glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, (2+4+2)*sizeof(float), 0); //position
+							glEnableVertexAttribArray(1);
+							glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, (2+4+2)*sizeof(float), (void*)(2*sizeof(float))); //colour
+							glEnableVertexAttribArray(2);
+							glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, (2+4+2)*sizeof(float), (void*)((2+4)*sizeof(float))); //uv
+						}
+						texturedShader.BindTexture(currentTextureHandle = s->GetTexture()->textureHandle);
+						//glBindTexture(GL_TEXTURE_2D,currentTextureHandle = s->GetTexture()->textureHandle);
+						glEnableVertexAttribArray(2);
+						//glActiveTexture(GL_TEXTURE0);
+						///glUniform1i(texUniform,0);
+						//glEnable(GL_TEXTURE_2D);
+						//glBindTexture(GL_TEXTURE_2D,currentTextureHandle = s->GetTexture()->textureHandle); 
+					}
 				} else {
-					glBindTexture(GL_TEXTURE_2D, 0);
-					glDisable(GL_TEXTURE_2D);
+					if (untexturedShader.UseProgram()){
+						glEnableVertexAttribArray(0);
+						glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, (2+4)*sizeof(float), 0); //position
+						glEnableVertexAttribArray(1);
+						glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, (2+4)*sizeof(float), (void*)(2*sizeof(float))); //colour
+						glDisableVertexAttribArray(2);
+						//glEnableVertexAttribArray(2);
+						//glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, (2+4+2)*sizeof(float), (void*)((2+4)*sizeof(float))); //uv
+					}
+					//glBindTexture(GL_TEXTURE_2D, 0);
+					//glDisable(GL_TEXTURE_2D);
 				}
 				
 			}
 
 			numVerts += 6;
-			data.reserve(6*(2+3+2));
+			data.reserve(data.size()+6*(2+4+textured*2));
 
 			const float x0 = s->position.x;
 			const float y0 = s->position.y;
@@ -411,6 +308,7 @@ void Renderer::Render(vector<GameObject::Sprite*>& sprites){
 			const float r = s->colour.r;
 			const float g = s->colour.g;
 			const float b = s->colour.b;
+			const float a = s->colour.a;
 			const float uvX0 = s->UV.x;
 			const float uvY0 = s->UV.y;
 			const float uvX1 = s->UV.z;
@@ -421,48 +319,66 @@ void Renderer::Render(vector<GameObject::Sprite*>& sprites){
 			data.emplace_back(r);
 			data.emplace_back(g);
 			data.emplace_back(b);
-			data.emplace_back(uvX0);
-			data.emplace_back(uvY0);
+			data.emplace_back(a);
+			if (textured){
+				data.emplace_back(uvX0);
+				data.emplace_back(uvY0);
+			}
 
 			data.emplace_back(x1);
 			data.emplace_back(y0);
 			data.emplace_back(r);
 			data.emplace_back(g);
 			data.emplace_back(b);
-			data.emplace_back(uvX1);
-			data.emplace_back(uvY0);
+			data.emplace_back(a);
+			if (textured){
+				data.emplace_back(uvX1);
+				data.emplace_back(uvY0);
+			}
 
 			data.emplace_back(x0);
 			data.emplace_back(y1);
 			data.emplace_back(r);
 			data.emplace_back(g);
 			data.emplace_back(b);
-			data.emplace_back(uvX0);
-			data.emplace_back(uvY1);
+			data.emplace_back(a);
+			if (textured){
+				data.emplace_back(uvX0);
+				data.emplace_back(uvY1);
+			}
 
 			data.emplace_back(x0);
 			data.emplace_back(y1);
 			data.emplace_back(r);
 			data.emplace_back(g);
 			data.emplace_back(b);
-			data.emplace_back(uvX0);
-			data.emplace_back(uvY1);
+			data.emplace_back(a);
+			if (textured){
+				data.emplace_back(uvX0);
+				data.emplace_back(uvY1);
+			}
 
 			data.emplace_back(x1);
 			data.emplace_back(y0);
 			data.emplace_back(r);
 			data.emplace_back(g);
 			data.emplace_back(b);
-			data.emplace_back(uvX1);
-			data.emplace_back(uvY0);
+			data.emplace_back(a);
+			if (textured){
+				data.emplace_back(uvX1);
+				data.emplace_back(uvY0);
+			}
 
 			data.emplace_back(x1);
 			data.emplace_back(y1);
 			data.emplace_back(r);
 			data.emplace_back(g);
 			data.emplace_back(b);
-			data.emplace_back(uvX1);
-			data.emplace_back(uvY1);
+			data.emplace_back(a);
+			if (textured){
+				data.emplace_back(uvX1);
+				data.emplace_back(uvY1);
+			}
 		}
 		if (numVerts){
 			glBufferData(GL_ARRAY_BUFFER, data.size()*sizeof(float), data.data(), GL_STREAM_DRAW);

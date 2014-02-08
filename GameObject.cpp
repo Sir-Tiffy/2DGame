@@ -9,7 +9,7 @@ namespace GameObject{
 
 	Sprite::Sprite()
 		:UV(0,0,1,1),
-		colour(1,1,1),
+		colour(1,1,1,1),
 		position(0,0),
 		size(1,1),
 		layer(0),
@@ -105,7 +105,7 @@ namespace GameObject{
 			case SPRITE_POSITION: return LuaCreateVec2(L,sprite->position);
 			case SPRITE_SIZE: return LuaCreateVec2(L,sprite->size);
 			case SPRITE_VISIBLE: lua_pushboolean(L,sprite->visible); return 1;
-			case SPRITE_COLOUR: return LuaCreateVec3(L, sprite->colour);
+			case SPRITE_COLOUR: return LuaCreateVec4(L, sprite->colour);
 			case SPRITE_LAYER: lua_pushnumber(L,sprite->GetLayer()); return 1;
 			case SPRITE_UV: return LuaCreateVec4(L, sprite->UV);
 			case SPRITE_TEXTURE:
@@ -122,8 +122,12 @@ namespace GameObject{
 			case SPRITE_POSITION: sprite->position = *(vec2*)luaL_checkudata(L,3,"Vector2"); return 0;
 			case SPRITE_SIZE: sprite->size = *(vec2*)luaL_checkudata(L,3,"Vector2"); return 0;
 			case SPRITE_VISIBLE: sprite->visible = lua_toboolean(L,3)!=0; return 0;
-			case SPRITE_COLOUR: sprite->colour = *(vec3*)luaL_checkudata(L,3,"Vector3"); return 0;
-			case SPRITE_LAYER: {
+			case SPRITE_COLOUR:{
+				if (luaL_testudata(L,3,"Vector3")) sprite->colour = vec4(*(vec3*)lua_touserdata(L,3),1);
+				else if (luaL_testudata(L,3,"Vector4")) sprite->colour = *(vec4*)lua_touserdata(L,3);
+				else return luaL_argerror(L,3,"Vector3 or Vector4 expected");
+				return 0;
+			} case SPRITE_LAYER: {
 				const double newLayer = luaL_checknumber(L,3);
 				if ((unsigned char)newLayer != newLayer) return luaL_argerror(L,3,"Sprite layer must be an integer from 0-255");
 				sprite->SetLayer((unsigned char)newLayer);
@@ -177,7 +181,7 @@ namespace GameObject{
 		return 1;
 	}
 
-	Camera::Camera():position(0,0),scale(1),rotation(0){}
+	Camera::Camera():position(.5,.5),scale(1),rotation(0){}
 
 	static int Camera_Index(lua_State* L){ //TODO: lua_option
 		Camera* cam = (Camera*)luaL_checkudata(L,1,"Camera");
@@ -233,7 +237,7 @@ namespace GameObject{
 		luaL_setfuncs(L,cameraMetatable,0);
 		lua_pop(L,1);
 
-		new(lua_newuserdata(L,sizeof(Camera)))(Camera);
+		Engine::instance->RecalculateCamera(new(lua_newuserdata(L,sizeof(Camera)))(Camera)());
 		luaL_setmetatable(L,"Camera");
 
 		lua_setglobal(L,"Camera");
