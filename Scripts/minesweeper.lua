@@ -22,6 +22,8 @@ do
 	end
 end
 
+Screen.Resizable = false
+
 local grid = {}
 width,height,totalMines,remainingMines=nil
 playing = false
