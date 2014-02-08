@@ -98,7 +98,7 @@ end
 
 local function CountProperty(clickX,clickY,prop)
 	if not playing then return end
-	if (not grid[clickX][clickY].clicked) then
+	if not grid[clickX][clickY].clicked then
 		ColourSquare(clickX,clickY,Vector3.new(1,0,1))
 		error("Tried to count property "..prop.." of unclicked square "..clickX..", "..clickY,2)
 	end
