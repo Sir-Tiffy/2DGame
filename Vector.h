@@ -54,10 +54,17 @@ namespace Vec{
 		}
 		vecN(vecN<T,2> xy, vecN<T,2> zw){
 			static_assert(N == 4, "Cannot construct a non-vec4 using two vec2s!");
-			data[0] = xy.data[0];
+			/*data[0] = xy.data[0];
 			data[1] = xy.data[1];
 			data[2] = zw.data[0];
-			data[3] = zw.data[1];
+			data[3] = zw.data[1];*/
+			memcpy(data,xy.data,2*sizeof(T));
+			memcpy(data+2,zw.data,2*sizeof(T));
+		}
+		vecN(vecN<T,3> xyz, T w){
+			static_assert(N==4, "Cannot construct a non-vec4 with a vec3 and fourth item!");
+			memcpy(data,xyz.data,3*sizeof(T));
+			data[3] = w;
 		}
 		explicit vecN(T* newData){
 			for (unsigned int i = 0; i < N; ++i) data[i] = newData[i];

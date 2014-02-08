@@ -1,7 +1,9 @@
 #pragma once
+#include "GLExtensions.h"
 #include "GameObject.h"
 #include "Matrix.h"
 #include "Texture.h"
+#include "Shader.h"
 
 class Renderer{
 private:
@@ -14,6 +16,9 @@ private:
 		resizable;
 	std::string windowTitle;
 	WindowHandle currentWindow;
+
+	TexturedShader texturedShader;
+	UntexturedShader untexturedShader;
 
 	mat4 projectionMatrix;
 	mat4 viewMatrix;
@@ -57,8 +62,10 @@ public:
 	bool SetVsync(bool enabled);
 	 //set the title of an open window
 	void SetWindowTitle(std::string title);
-
+	
 	void OnWindowResize(int width, int height);
+	void ResizeWindow(int width, int height);
+	void SetResizable(bool resizable);
 
 	void Render(std::vector<GameObject::Sprite*>& objects);
 

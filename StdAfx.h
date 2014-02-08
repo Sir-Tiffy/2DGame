@@ -5,6 +5,7 @@
 #include <string>
 #include <exception>
 #include <fstream>
+#include <sstream>
 #include <unordered_set>
 #include <unordered_map>
 #include <sstream>
