@@ -237,6 +237,8 @@ void Renderer::Render(vector<GameObject::Sprite*>& sprites){
 		texturedShader.UploadVPMatrix(true,(float*)&vp.data);
 		CheckGLError("Error uploading matrix to untextured shader");
 
+		Shader::UnloadProgram();
+
 		std::sort(sprites.begin(), sprites.end(), [](GameObject::Sprite* left, GameObject::Sprite* right){return left->GetSortKey() < right->GetSortKey();});
 
 		glBindBuffer(GL_ARRAY_BUFFER, renderBufferObject);
@@ -276,7 +278,7 @@ void Renderer::Render(vector<GameObject::Sprite*>& sprites){
 						}
 						texturedShader.BindTexture(currentTextureHandle = s->GetTexture()->textureHandle);
 						//glBindTexture(GL_TEXTURE_2D,currentTextureHandle = s->GetTexture()->textureHandle);
-						glEnableVertexAttribArray(2);
+						//glEnableVertexAttribArray(2);
 						//glActiveTexture(GL_TEXTURE0);
 						///glUniform1i(texUniform,0);
 						//glEnable(GL_TEXTURE_2D);

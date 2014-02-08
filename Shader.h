@@ -9,6 +9,9 @@ protected:
 public:
 	virtual bool UseProgram();
 	void CreateShader(std::string fragmentFilename, std::string vertexFilename);
+	static inline void UnloadProgram(){
+		currentShader = nullptr;
+	}
 };
 
 class TexturedShader:public Shader{
