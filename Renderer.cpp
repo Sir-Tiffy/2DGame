@@ -129,7 +129,6 @@ bool Renderer::SetVsync(bool enabled){
 	return enabled;
 }
 
-
 void Renderer::RecalculateCamera(vec2 position, float scale, float rotation){
 	cameraPosition = -position;
 	cameraScale = scale;
@@ -170,12 +169,22 @@ void Renderer::RecalculateCamera(vec2 position, float scale, float rotation){
 	);
 }
 
+Vec::vec2 Renderer::ScreenToWorld(float x1, float y1){
+	x1 = 2*x1/width-1;
+	y1 = 2*(1-y1/height-.5f);
+	const float a = (float)height/width;
+	const float sinTheta = sin(cameraRotation);
+	const float cosTheta = cos(cameraRotation);
+	const float as2 = 1/(a*cameraScale*2);
+	return Vec::vec2((a*y1*sinTheta+x1*cosTheta)*as2 - cameraPosition.x, (a*y1*cosTheta - x1*sinTheta)*as2 - cameraPosition.y);
+}
+
 void Renderer::OnWindowResize(int width, int height){
 	this->width = width;
 	this->height = height;
 	glViewport(0,0,width,height);
 	projectionMatrix = mat4(
-		(float)height/width*2,0,0,0,
+		2.0f*height/width,0,0,0,
 		0,2,0,0,
 		0,0,0,0,
 		0,0,0,1);
@@ -183,7 +192,14 @@ void Renderer::OnWindowResize(int width, int height){
 }
 
 void Renderer::ResizeWindow(int width, int height){
-	SetWindowPos(currentWindow,HWND_TOP,0,0,width,height,SWP_NOZORDER|SWP_NOMOVE);
+	RECT rect;
+	rect.left = 0;
+	rect.top = 0;
+	rect.right = width;
+	rect.bottom = height;
+	AdjustWindowRectEx(&rect, GetWindowLong(currentWindow,GWL_STYLE), false, GetWindowLong(currentWindow,GWL_EXSTYLE));
+
+	SetWindowPos(currentWindow,HWND_TOP,0,0,rect.right-rect.left,rect.bottom-rect.top,SWP_NOZORDER|SWP_NOMOVE);
 	return OnWindowResize(width,height);
 }
 
@@ -230,11 +246,11 @@ void Renderer::Render(vector<GameObject::Sprite*>& sprites){
 		const mat4 vp = projectionMatrix*viewMatrix;
 		untexturedShader.UseProgram();
 		CheckGLError("Error using untextured shader");
-		untexturedShader.UploadVPMatrix(true,(float*)&vp.data);
+		untexturedShader.UploadVPMatrix(false,vp.data);
 		CheckGLError("Error uploading matrix to untextured shader");
 		texturedShader.UseProgram();
 		CheckGLError("Error using untextured shader");
-		texturedShader.UploadVPMatrix(true,(float*)&vp.data);
+		texturedShader.UploadVPMatrix(false,vp.data);
 		CheckGLError("Error uploading matrix to untextured shader");
 
 		Shader::UnloadProgram();

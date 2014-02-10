@@ -171,13 +171,13 @@ void Engine::BeginLoop(){
 	lua_call(L,1,0);
 	lua_pop(L,1);
 
-	for (string& script:GetAllFilesInDir("scripts\\","*.lua")){
+	//for (string& script:GetAllFilesInDir("scripts\\","*.lua")){
 		lua_State* thread = lua_newthread(L);
-		if (luaL_loadfile(thread,script.c_str()) == LUA_OK)
+		if (luaL_loadfile(thread,"scripts/main.lua"/*script.c_str()*/) == LUA_OK)
 			StartScript(thread, 0);
 		else
 			MessageBox(NULL, lua_tostring(thread,-1), "Script error!", MB_DEFAULT_DESKTOP_ONLY);
-	}
+	//}
 
 	while (running){
 		input.GetInput(currentWindow);
@@ -297,18 +297,22 @@ void Engine::ReceiveEvent(const Event* event){
 	BroadcastEvent(event);
 }
 
+static int ScreenCoordsToWorld(lua_State* L){
+	const Vec::vec2 result = Engine::instance->renderer.ScreenToWorld((float)luaL_checknumber(L,1),(float)luaL_checknumber(L,2));
+	lua_pushnumber(L,result.x);
+	lua_pushnumber(L,result.y);
+	return 2;
+}
 
-
-
-const static char* const LUASCREEN_INDICIES[] = {
-	"Width","Height","Fullscreen","Resizable",
-	NULL
-}; 
-enum {
-	LUASCREEN_WIDTH,LUASCREEN_HEIGHT,LUASCREEN_FULLSCREEN,LUASCREEN_RESIZABLE
-};	
 int LuaScreen_Index(lua_State* L){
-	switch(luaL_checkoption(L,2,NULL, LUASCREEN_INDICIES)){
+	const static char* const members[] = {
+		"Width","Height","Fullscreen","Resizable","ToWorldCoords",
+		NULL
+	};
+	enum {
+	LUASCREEN_WIDTH,LUASCREEN_HEIGHT,LUASCREEN_FULLSCREEN,LUASCREEN_RESIZABLE,LUASCREEN_TO_WORLD_COORDS
+	};	
+	switch(luaL_checkoption(L,2,NULL, members)){
 		case LUASCREEN_WIDTH:
 			lua_pushnumber(L,Engine::instance->width);
 			return 1;
@@ -320,6 +324,9 @@ int LuaScreen_Index(lua_State* L){
 			return 1;
 		case LUASCREEN_RESIZABLE:
 			lua_pushboolean(L,Engine::instance->resizable);
+			return 1;
+		case LUASCREEN_TO_WORLD_COORDS:
+			lua_pushcfunction(L,ScreenCoordsToWorld);
 			return 1;
 	}
 	return lua_error(L);
@@ -338,7 +345,14 @@ void Engine::SetResizable(bool newResizable){
 }
 
 int LuaScreen_NewIndex(lua_State* L){
-	switch(luaL_checkoption(L,2,NULL,LUASCREEN_INDICIES)){
+	const static char* const members[] = {
+		"Width","Height","Fullscreen","Resizable",
+		NULL
+	};
+	enum {
+	LUASCREEN_WIDTH,LUASCREEN_HEIGHT,LUASCREEN_FULLSCREEN,LUASCREEN_RESIZABLE
+	};	
+	switch(luaL_checkoption(L,2,NULL,members)){
 		case LUASCREEN_WIDTH:
 			Engine::instance->SetWidth(luaL_checkint(L,3));
 			return 0;

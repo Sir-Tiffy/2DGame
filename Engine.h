@@ -58,10 +58,12 @@ private:
 	void SetHeight(int height);
 	void SetWidth(int width);
 	void SetResizable(bool resizable);
+
+	void RegisterLuaScreen(lua_State* L);
 	
 	friend int LuaScreen_Index(lua_State* L);
 	friend int LuaScreen_NewIndex(lua_State* L);
-	void RegisterLuaScreen(lua_State* L);
+	friend int ScreenCoordsToWorld(lua_State* L);
 	//void Render();
 protected:
 public:

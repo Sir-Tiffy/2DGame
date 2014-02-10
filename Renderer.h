@@ -22,6 +22,7 @@ private:
 
 	mat4 projectionMatrix;
 	mat4 viewMatrix;
+	mat4 screenToWorldMatrix;
 
 	Vec::vec2 cameraPosition;
 	float cameraScale;
@@ -53,6 +54,8 @@ public:
 
 	static void SetTextureFilter(Texture::Texture* tex, TextureFilter filter);
 	static void DeleteTexture(Texture::Texture* tex);
+	
+	Vec::vec2 ScreenToWorld(float x, float y);
 
 	//close the current open window
 	void CloseWindow();
