@@ -5,6 +5,7 @@
 using namespace std;
 using namespace Vec;
 
+	int RedirectedPrint(lua_State* L);
 namespace GameObject{
 
 	Sprite::Sprite()
@@ -43,6 +44,8 @@ namespace GameObject{
 	}
 
 	static int DestroySprite(lua_State* L){
+		lua_pushstring(L,"Removing sprite!");
+		RedirectedPrint(L);
 		Sprite* sprite = (Sprite*)luaL_checkudata(L,1,"Sprite");
 		/*lua_pushnil(L);
 		while(lua_next(L,LUA_REGISTRYINDEX)!=0){

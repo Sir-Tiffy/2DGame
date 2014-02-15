@@ -225,7 +225,7 @@ void Engine::ReadConfig(){
 	return 0;
 }*/
 
-static int RedirectedPrint (lua_State *L) {
+ int RedirectedPrint (lua_State *L) {
 	stringstream stream;
 	int n = lua_gettop(L);	/* number of arguments */
 	int i;
@@ -269,7 +269,7 @@ static int Wait(lua_State* L){
 }
 
 static int Tick(lua_State*L){
-	lua_pushnumber(L,Engine::instance->GetTime());
+	lua_pushnumber(L,Engine::instance->CalculateTime());
 	return 1;
 }
 

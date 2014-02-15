@@ -45,7 +45,6 @@ private:
 	void CloseWindow();
 	void InitGL();*/
 
-	double CalculateTime();
 
 	void RunScripts();
 	//void BeginScripts();
@@ -74,6 +73,7 @@ public:
 	
 	virtual void ReceiveEvent(const Event* event) override;
 
+	static double CalculateTime();
 	void SetWindowTitle(std::string s);
 	
 	void StartScript(lua_State* thread, unsigned int args);
