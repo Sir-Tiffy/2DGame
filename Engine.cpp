@@ -346,11 +346,11 @@ void Engine::SetResizable(bool newResizable){
 
 int LuaScreen_NewIndex(lua_State* L){
 	const static char* const members[] = {
-		"Width","Height","Fullscreen","Resizable","Title",
+		"Width","Height","Fullscreen","Resizable","Title","BackgroundColour",
 		NULL
 	};
 	enum {
-	LUASCREEN_WIDTH,LUASCREEN_HEIGHT,LUASCREEN_FULLSCREEN,LUASCREEN_RESIZABLE,TITLE
+	LUASCREEN_WIDTH,LUASCREEN_HEIGHT,LUASCREEN_FULLSCREEN,LUASCREEN_RESIZABLE,LUASCREEN_TITLE,LUASCREEN_BACKGROUND_COLOUR
 	};	
 	switch(luaL_checkoption(L,2,NULL,members)){
 		case LUASCREEN_WIDTH:
@@ -366,8 +366,11 @@ int LuaScreen_NewIndex(lua_State* L){
 		case LUASCREEN_RESIZABLE:
 			Engine::instance->SetResizable(lua_toboolean(L,3)!=0);
 			return 0;
-		case TITLE:
+		case LUASCREEN_TITLE:
 			Engine::instance->SetWindowTitle(luaL_checkstring(L,3));
+			return 0;
+		case LUASCREEN_BACKGROUND_COLOUR:
+			Engine::instance->SetBackgroundColour(*(Vec::vec3*)luaL_checkudata(L,3,"Vector3"));
 			return 0;
 	}
 	return lua_error(L);

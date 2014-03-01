@@ -217,7 +217,7 @@ void Renderer::SetResizable(bool resizable){
 
 void Renderer::InitGL(){
 	GetGLFuncs();
-	glClearColor(0,0,0,0);
+	SetBackgroundColour(backgroundColour);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	//const float aspect = (float)width/height;
@@ -500,6 +500,10 @@ void Renderer::Render(vector<GameObject::Sprite*>& sprites){
 	SwapBuffers(hdc);
 }*/
 
+void Renderer::SetBackgroundColour(vec3 colour){
+	glClearColor(colour.r,colour.g,colour.b,1);
+}
+
 void Renderer::Init(HINSTANCE hInstance, int nCmdShow, WNDPROC wndProc){
 	this->nCmdShow = nCmdShow;
 	WNDCLASSEX wc;
@@ -528,6 +532,7 @@ Renderer::Renderer():
 	fullscreen(false),
 	vsync(false),
 	resizable(false),
+	backgroundColour(0,0,0),
 	width(800),
 	height(600),
 	projectionMatrix(mat4::identity),

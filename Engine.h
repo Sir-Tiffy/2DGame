@@ -58,6 +58,13 @@ private:
 	void SetWidth(int width);
 	void SetResizable(bool resizable);
 
+	inline void SetBackgroundColour(Vec::vec3 colour){
+		renderer.SetBackgroundColour(colour);
+	}
+	inline void SetBackgroundColour(float r, float g, float b){
+		renderer.SetBackgroundColour(Vec::vec3(r,g,b));
+	}
+
 	void RegisterLuaScreen(lua_State* L);
 	
 	friend int LuaScreen_Index(lua_State* L);
