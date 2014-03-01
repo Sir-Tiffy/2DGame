@@ -166,55 +166,55 @@ namespace Vec{
 	}
 
 	static int Vec3Cross(lua_State* L){
-		vec3* left = (vec3*)luaL_checkudata(L, 1, "Vector2");
-		vec3* right = (vec3*)luaL_checkudata(L, 2, "Vector2");
+		vec3* left = (vec3*)luaL_checkudata(L, 1, "Vector3");
+		vec3* right = (vec3*)luaL_checkudata(L, 2, "Vector3");
 		return LuaCreateVec3(L, left->cross(*right));
 	}
 	static int Vec3Dot(lua_State* L){
-		vec3* left = (vec3*)luaL_checkudata(L, 1, "Vector2");
-		vec3* right = (vec3*)luaL_checkudata(L, 2, "Vector2");
+		vec3* left = (vec3*)luaL_checkudata(L, 1, "Vector3");
+		vec3* right = (vec3*)luaL_checkudata(L, 2, "Vector3");
 		lua_pushnumber(L, left->dot(*right));
 		return 1;
 	}
 	static int Vec3_Add(lua_State* L){
-		vec3* left = (vec3*)luaL_checkudata(L,1,"Vector2");
-		vec3* right = (vec3*)luaL_checkudata(L,2,"Vector2");
+		vec3* left = (vec3*)luaL_checkudata(L,1,"Vector3");
+		vec3* right = (vec3*)luaL_checkudata(L,2,"Vector3");
 		return LuaCreateVec3(L,*left+*right);
 	}
 	static int Vec3_Sub(lua_State* L){
-		vec3* left = (vec3*)luaL_checkudata(L,1,"Vector2");
-		vec3* right = (vec3*)luaL_checkudata(L,2,"Vector2");
+		vec3* left = (vec3*)luaL_checkudata(L,1,"Vector3");
+		vec3* right = (vec3*)luaL_checkudata(L,2,"Vector3");
 		return LuaCreateVec3(L,*left-*right);
 	}
 	static int Vec3_unm(lua_State* L){
-		vec3* vec = (vec3*)luaL_checkudata(L,1,"Vector2");
+		vec3* vec = (vec3*)luaL_checkudata(L,1,"Vector3");
 		return LuaCreateVec3(L,-(*vec));
 	}
 	static int Vec3_eq(lua_State* L){
-		vec3* left = (vec3*)luaL_checkudata(L,1,"Vector2");
-		vec3* right = (vec3*)luaL_checkudata(L,2,"Vector2");
+		vec3* left = (vec3*)luaL_checkudata(L,1,"Vector3");
+		vec3* right = (vec3*)luaL_checkudata(L,2,"Vector3");
 		lua_pushboolean(L, (*left)==(*right));
 		return 1;
 	}
 	static int Vec3_Mul(lua_State* L){
-		vec3* left = (vec3*)luaL_checkudata(L, 1, "Vector2");
+		vec3* left = (vec3*)luaL_checkudata(L, 1, "Vector3");
 		if (lua_isnumber(L, 2)){
 			return LuaCreateVec3(L,(*left)*(float)lua_tonumber(L,2));
 		}
-		vec3* right = (vec3*)luaL_testudata(L, 2, "Vector2");
+		vec3* right = (vec3*)luaL_testudata(L, 2, "Vector3");
 		if (right == NULL){
-			return luaL_argerror(L, 2, "Vector2 or Number expected");
+			return luaL_argerror(L, 2, "Vector3 or Number expected");
 		}
 		return LuaCreateVec3(L, (*left)*(*right));
 	}
 	static int Vec3_Div(lua_State* L){
-		vec3* left = (vec3*)luaL_checkudata(L, 1, "Vector2");
+		vec3* left = (vec3*)luaL_checkudata(L, 1, "Vector3");
 		if (lua_isnumber(L, 2)){
 			return LuaCreateVec3(L,(*left)/(float)lua_tonumber(L,2));
 		}
-		vec3* right = (vec3*)luaL_testudata(L, 2, "Vector2");
+		vec3* right = (vec3*)luaL_testudata(L, 2, "Vector3");
 		if (right == NULL){
-			return luaL_argerror(L, 2, "Vector2 or Number expected");
+			return luaL_argerror(L, 2, "Vector3 or Number expected");
 		}
 		return LuaCreateVec3(L, (*left)/(*right));
 	}
