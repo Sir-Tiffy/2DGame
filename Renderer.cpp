@@ -203,6 +203,10 @@ void Renderer::ResizeWindow(int width, int height){
 	return OnWindowResize(width,height);
 }
 
+void Renderer::SetWindowTitle(string title){
+	SetWindowText(currentWindow,title.c_str());
+}
+
 void Renderer::SetResizable(bool resizable){
 	this->resizable = resizable;
 	if (fullscreen) return;
