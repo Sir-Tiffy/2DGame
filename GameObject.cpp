@@ -160,10 +160,15 @@ namespace GameObject{
 		lua_pushstring(L,"Sprite");
 		return 1;
 	}
+	static int Sprite_IsSprite(lua_State* L){
+		lua_pushboolean(L,luaL_testudata(L,1,"Sprite")!=NULL);
+		return 1;
+	}
 
 	int LuaLoadSprite(lua_State* L){
 		static const luaL_Reg lib[] = {
 			{"new",CreateSpriteUserdata},
+			{"IsSprite",Sprite_IsSprite},
 			{NULL, NULL}
 		};
 
