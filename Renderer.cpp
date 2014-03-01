@@ -175,7 +175,7 @@ Vec::vec2 Renderer::ScreenToWorld(float x1, float y1){
 	const float a = (float)height/width;
 	const float sinTheta = sin(cameraRotation);
 	const float cosTheta = cos(cameraRotation);
-	const float as2 = 1/(a*cameraScale*2);
+	const float as2 = .5f*cameraScale/a;
 	return Vec::vec2((a*y1*sinTheta+x1*cosTheta)*as2 - cameraPosition.x, (a*y1*cosTheta - x1*sinTheta)*as2 - cameraPosition.y);
 }
 
