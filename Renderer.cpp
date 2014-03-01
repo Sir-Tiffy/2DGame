@@ -569,7 +569,7 @@ bool Renderer::UploadTexture(lua_State* L, Texture::Texture* tex, vector<char>& 
 void Renderer::SetTextureFilter(Texture::Texture* tex, TextureFilter filter){
 	glBindTexture(GL_TEXTURE_2D, tex->textureHandle);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
 }
 
 void Renderer::DeleteTexture(Texture::Texture* tex){
