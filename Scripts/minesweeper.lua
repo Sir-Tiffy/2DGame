@@ -15,8 +15,8 @@ for i = 1, 4 do
 	UVs[i+4] = Vector4.new((i-1)*22,43,20,20)
 end
 do
-	local texWidth = tex.width
-	local texHeight = tex.height
+	local texWidth = tex.Width
+	local texHeight = tex.Height
 	for i,v in pairs(UVs) do
 		UVs[i] = Vector4.new(v.x/texWidth,1-(v.y+v.w)/texHeight,(v.x+v.z)/texWidth,1-v.y/texHeight)
 	end
