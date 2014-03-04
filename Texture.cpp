@@ -419,7 +419,7 @@ namespace Texture{
 	static int Texture_Index(lua_State* L){
 		Texture* tex = (Texture*)luaL_checkudata(L,1,"Texture");
 		const static char* const textureIndicies[] = {
-			"width","height","size","SetFilter",0
+			"Width","Height","Size","SetFilter",0
 		};
 		enum {
 			WIDTH, HEIGHT, SIZE, SETFILTER

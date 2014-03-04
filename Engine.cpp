@@ -257,7 +257,7 @@ void Engine::ReadConfig(){
 }
 
 void Engine::SetWindowTitle(string title){
-	SetWindowText(currentWindow,title.c_str());
+	renderer.SetWindowTitle(title);
 }
 
 static int Wait(lua_State* L){
@@ -346,11 +346,11 @@ void Engine::SetResizable(bool newResizable){
 
 int LuaScreen_NewIndex(lua_State* L){
 	const static char* const members[] = {
-		"Width","Height","Fullscreen","Resizable",
+		"Width","Height","Fullscreen","Resizable","Title","BackgroundColour",
 		NULL
 	};
 	enum {
-	LUASCREEN_WIDTH,LUASCREEN_HEIGHT,LUASCREEN_FULLSCREEN,LUASCREEN_RESIZABLE
+	LUASCREEN_WIDTH,LUASCREEN_HEIGHT,LUASCREEN_FULLSCREEN,LUASCREEN_RESIZABLE,LUASCREEN_TITLE,LUASCREEN_BACKGROUND_COLOUR
 	};	
 	switch(luaL_checkoption(L,2,NULL,members)){
 		case LUASCREEN_WIDTH:
@@ -365,6 +365,12 @@ int LuaScreen_NewIndex(lua_State* L){
 			return luaL_error(L,"Setting window fullscreen is not yet supported!");
 		case LUASCREEN_RESIZABLE:
 			Engine::instance->SetResizable(lua_toboolean(L,3)!=0);
+			return 0;
+		case LUASCREEN_TITLE:
+			Engine::instance->SetWindowTitle(luaL_checkstring(L,3));
+			return 0;
+		case LUASCREEN_BACKGROUND_COLOUR:
+			Engine::instance->SetBackgroundColour(*(Vec::vec3*)luaL_checkudata(L,3,"Vector3"));
 			return 0;
 	}
 	return lua_error(L);
@@ -406,7 +412,7 @@ void Engine::RegisterLuaScreen(lua_State* L){
 Engine::Engine(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 		:hInstance(hInstance),
 		nCmdShow(nCmdShow),
-		windowTitle("SUPER COOL 2D GAME"),
+		windowTitle("Game"),
 		currentWindow(nullptr),
 		fullscreen(false){
 	if (instance != nullptr) throw logic_error("Engine is already running!");
