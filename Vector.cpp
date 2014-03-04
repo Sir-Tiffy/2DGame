@@ -27,7 +27,8 @@ namespace Vec{
 		else if (str == "length") lua_pushnumber(L, vec->length());
 		else if (str == "lengthSqr") lua_pushnumber(L, vec->lengthSqr());
 		else if (str == "dot") lua_pushcfunction(L, Vec2Dot);
-		else return luaL_error(L, "%s is not a valid member of vec2",str);
+		else return luaL_error(L, "%s is not a valid member of vec2",str.c_str());
+		
 		return 1;
 	}
 	static int Vec2_NewIndex(lua_State* L){ //TODO: lua_option
@@ -35,7 +36,7 @@ namespace Vec{
 		string str = luaL_checkstring(L,2);
 		if (str == "x") vec->x = (float)luaL_checknumber(L,3);
 		else if (str == "y") vec->y = (float)luaL_checknumber(L,3);
-		else return luaL_error(L, "%s is not a valid member of vec2",str);
+		else return luaL_error(L, "%s is not a valid member of vec2",str.c_str());
 		return 0;
 	}
 	static int Vec2_ToString(lua_State* L){
@@ -147,7 +148,7 @@ namespace Vec{
 		else if (str == "lengthSqr") lua_pushnumber(L, vec->lengthSqr());
 		else if (str == "dot") lua_pushcfunction(L, Vec3Dot);
 		else if (str == "cross") lua_pushcfunction(L, Vec3Cross);
-		else return luaL_error(L, "%s is not a valid member of vec3",str);
+		else return luaL_error(L, "%s is not a valid member of vec3",str.c_str());
 		return 1;
 	}
 	static int Vec3_NewIndex(lua_State* L){ //TODO: lua_option
@@ -156,7 +157,7 @@ namespace Vec{
 		if (str == "x") vec->x = (float)luaL_checknumber(L,3);
 		else if (str == "y") vec->y = (float)luaL_checknumber(L,3);
 		else if (str == "z") vec->z = (float)luaL_checknumber(L,3);
-		else return luaL_error(L, "%s is not a valid member of vec3",str);
+		else return luaL_error(L, "%s is not a valid member of vec3",str.c_str());
 		return 0;
 	}
 	static int Vec3_ToString(lua_State* L){
@@ -166,55 +167,55 @@ namespace Vec{
 	}
 
 	static int Vec3Cross(lua_State* L){
-		vec3* left = (vec3*)luaL_checkudata(L, 1, "Vector2");
-		vec3* right = (vec3*)luaL_checkudata(L, 2, "Vector2");
+		vec3* left = (vec3*)luaL_checkudata(L, 1, "Vector3");
+		vec3* right = (vec3*)luaL_checkudata(L, 2, "Vector3");
 		return LuaCreateVec3(L, left->cross(*right));
 	}
 	static int Vec3Dot(lua_State* L){
-		vec3* left = (vec3*)luaL_checkudata(L, 1, "Vector2");
-		vec3* right = (vec3*)luaL_checkudata(L, 2, "Vector2");
+		vec3* left = (vec3*)luaL_checkudata(L, 1, "Vector3");
+		vec3* right = (vec3*)luaL_checkudata(L, 2, "Vector3");
 		lua_pushnumber(L, left->dot(*right));
 		return 1;
 	}
 	static int Vec3_Add(lua_State* L){
-		vec3* left = (vec3*)luaL_checkudata(L,1,"Vector2");
-		vec3* right = (vec3*)luaL_checkudata(L,2,"Vector2");
+		vec3* left = (vec3*)luaL_checkudata(L,1,"Vector3");
+		vec3* right = (vec3*)luaL_checkudata(L,2,"Vector3");
 		return LuaCreateVec3(L,*left+*right);
 	}
 	static int Vec3_Sub(lua_State* L){
-		vec3* left = (vec3*)luaL_checkudata(L,1,"Vector2");
-		vec3* right = (vec3*)luaL_checkudata(L,2,"Vector2");
+		vec3* left = (vec3*)luaL_checkudata(L,1,"Vector3");
+		vec3* right = (vec3*)luaL_checkudata(L,2,"Vector3");
 		return LuaCreateVec3(L,*left-*right);
 	}
 	static int Vec3_unm(lua_State* L){
-		vec3* vec = (vec3*)luaL_checkudata(L,1,"Vector2");
+		vec3* vec = (vec3*)luaL_checkudata(L,1,"Vector3");
 		return LuaCreateVec3(L,-(*vec));
 	}
 	static int Vec3_eq(lua_State* L){
-		vec3* left = (vec3*)luaL_checkudata(L,1,"Vector2");
-		vec3* right = (vec3*)luaL_checkudata(L,2,"Vector2");
+		vec3* left = (vec3*)luaL_checkudata(L,1,"Vector3");
+		vec3* right = (vec3*)luaL_checkudata(L,2,"Vector3");
 		lua_pushboolean(L, (*left)==(*right));
 		return 1;
 	}
 	static int Vec3_Mul(lua_State* L){
-		vec3* left = (vec3*)luaL_checkudata(L, 1, "Vector2");
+		vec3* left = (vec3*)luaL_checkudata(L, 1, "Vector3");
 		if (lua_isnumber(L, 2)){
 			return LuaCreateVec3(L,(*left)*(float)lua_tonumber(L,2));
 		}
-		vec3* right = (vec3*)luaL_testudata(L, 2, "Vector2");
+		vec3* right = (vec3*)luaL_testudata(L, 2, "Vector3");
 		if (right == NULL){
-			return luaL_argerror(L, 2, "Vector2 or Number expected");
+			return luaL_argerror(L, 2, "Vector3 or Number expected");
 		}
 		return LuaCreateVec3(L, (*left)*(*right));
 	}
 	static int Vec3_Div(lua_State* L){
-		vec3* left = (vec3*)luaL_checkudata(L, 1, "Vector2");
+		vec3* left = (vec3*)luaL_checkudata(L, 1, "Vector3");
 		if (lua_isnumber(L, 2)){
 			return LuaCreateVec3(L,(*left)/(float)lua_tonumber(L,2));
 		}
-		vec3* right = (vec3*)luaL_testudata(L, 2, "Vector2");
+		vec3* right = (vec3*)luaL_testudata(L, 2, "Vector3");
 		if (right == NULL){
-			return luaL_argerror(L, 2, "Vector2 or Number expected");
+			return luaL_argerror(L, 2, "Vector3 or Number expected");
 		}
 		return LuaCreateVec3(L, (*left)/(*right));
 	}
@@ -280,7 +281,7 @@ namespace Vec{
 		else if (str == "y" || str == "g") lua_pushnumber(L,vec->y);
 		else if (str == "z" || str == "b") lua_pushnumber(L, vec->z);
 		else if (str == "w" || str == "a") lua_pushnumber(L, vec->w);
-		else return luaL_error(L, "%s is not a valid member of vec4",str);
+		else return luaL_error(L, "%s is not a valid member of vec4",str.c_str());
 		return 1;
 	}
 	static int Vec4_NewIndex(lua_State* L){ //TODO: lua_option
@@ -290,7 +291,7 @@ namespace Vec{
 		else if (str == "y" || str == "g") vec->y = (float)luaL_checknumber(L,3);
 		else if (str == "z" || str == "b") vec->z = (float)luaL_checknumber(L,3);
 		else if (str == "w" || str == "a") vec->w = (float)luaL_checknumber(L,3);
-		else return luaL_error(L, "%s is not a valid member of vec4",str);
+		else return luaL_error(L, "%s is not a valid member of vec4",str.c_str());
 		return 0;
 	}
 	static int Vec4_ToString(lua_State* L){

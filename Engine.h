@@ -45,7 +45,6 @@ private:
 	void CloseWindow();
 	void InitGL();*/
 
-	double CalculateTime();
 
 	void RunScripts();
 	//void BeginScripts();
@@ -58,6 +57,13 @@ private:
 	void SetHeight(int height);
 	void SetWidth(int width);
 	void SetResizable(bool resizable);
+
+	inline void SetBackgroundColour(Vec::vec3 colour){
+		renderer.SetBackgroundColour(colour);
+	}
+	inline void SetBackgroundColour(float r, float g, float b){
+		renderer.SetBackgroundColour(Vec::vec3(r,g,b));
+	}
 
 	void RegisterLuaScreen(lua_State* L);
 	
@@ -74,6 +80,7 @@ public:
 	
 	virtual void ReceiveEvent(const Event* event) override;
 
+	static double CalculateTime();
 	void SetWindowTitle(std::string s);
 	
 	void StartScript(lua_State* thread, unsigned int args);

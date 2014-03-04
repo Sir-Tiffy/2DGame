@@ -5,6 +5,7 @@
 using namespace std;
 using namespace Vec;
 
+	int RedirectedPrint(lua_State* L);
 namespace GameObject{
 
 	Sprite::Sprite()
@@ -21,7 +22,8 @@ namespace GameObject{
 
 	unsigned int Sprite::GetSortKey(){
 		if (modified){
-			sortKey = (((texture!=nullptr)?(texture->textureID<<8):0))|layer;
+			//sortKey = (((texture!=nullptr)?(texture->textureID<<8):0))|layer;
+			sortKey = (layer<<8)|((texture!=nullptr)?texture->textureID:0);
 			modified = false;
 		}
 		return sortKey;
@@ -157,10 +159,15 @@ namespace GameObject{
 		lua_pushstring(L,"Sprite");
 		return 1;
 	}
+	static int Sprite_IsSprite(lua_State* L){
+		lua_pushboolean(L,luaL_testudata(L,1,"Sprite")!=NULL);
+		return 1;
+	}
 
 	int LuaLoadSprite(lua_State* L){
 		static const luaL_Reg lib[] = {
 			{"new",CreateSpriteUserdata},
+			{"IsSprite",Sprite_IsSprite},
 			{NULL, NULL}
 		};
 

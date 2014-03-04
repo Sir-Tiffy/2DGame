@@ -20,6 +20,8 @@ private:
 	TexturedShader texturedShader;
 	UntexturedShader untexturedShader;
 
+	Vec::vec3 backgroundColour;
+
 	mat4 projectionMatrix;
 	mat4 viewMatrix;
 	mat4 screenToWorldMatrix;
@@ -65,6 +67,7 @@ public:
 	bool SetVsync(bool enabled);
 	 //set the title of an open window
 	void SetWindowTitle(std::string title);
+	void SetBackgroundColour(Vec::vec3 colour);
 	
 	void OnWindowResize(int width, int height);
 	void ResizeWindow(int width, int height);

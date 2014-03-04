@@ -175,7 +175,7 @@ Vec::vec2 Renderer::ScreenToWorld(float x1, float y1){
 	const float a = (float)height/width;
 	const float sinTheta = sin(cameraRotation);
 	const float cosTheta = cos(cameraRotation);
-	const float as2 = 1/(a*cameraScale*2);
+	const float as2 = .5f*cameraScale/a;
 	return Vec::vec2((a*y1*sinTheta+x1*cosTheta)*as2 - cameraPosition.x, (a*y1*cosTheta - x1*sinTheta)*as2 - cameraPosition.y);
 }
 
@@ -203,6 +203,10 @@ void Renderer::ResizeWindow(int width, int height){
 	return OnWindowResize(width,height);
 }
 
+void Renderer::SetWindowTitle(string title){
+	SetWindowText(currentWindow,title.c_str());
+}
+
 void Renderer::SetResizable(bool resizable){
 	this->resizable = resizable;
 	if (fullscreen) return;
@@ -213,7 +217,7 @@ void Renderer::SetResizable(bool resizable){
 
 void Renderer::InitGL(){
 	GetGLFuncs();
-	glClearColor(0,0,0,0);
+	SetBackgroundColour(backgroundColour);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	//const float aspect = (float)width/height;
@@ -496,6 +500,10 @@ void Renderer::Render(vector<GameObject::Sprite*>& sprites){
 	SwapBuffers(hdc);
 }*/
 
+void Renderer::SetBackgroundColour(vec3 colour){
+	glClearColor(colour.r,colour.g,colour.b,1);
+}
+
 void Renderer::Init(HINSTANCE hInstance, int nCmdShow, WNDPROC wndProc){
 	this->nCmdShow = nCmdShow;
 	WNDCLASSEX wc;
@@ -524,6 +532,7 @@ Renderer::Renderer():
 	fullscreen(false),
 	vsync(false),
 	resizable(false),
+	backgroundColour(0,0,0),
 	width(800),
 	height(600),
 	projectionMatrix(mat4::identity),
@@ -565,7 +574,7 @@ bool Renderer::UploadTexture(lua_State* L, Texture::Texture* tex, vector<char>& 
 void Renderer::SetTextureFilter(Texture::Texture* tex, TextureFilter filter){
 	glBindTexture(GL_TEXTURE_2D, tex->textureHandle);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
 }
 
 void Renderer::DeleteTexture(Texture::Texture* tex){
